@@ -9,7 +9,7 @@ export const primaryEmbed = (title = "", description = "") =>
     new Discord.MessageEmbed({...config.embeds.primary, title, description})
 
 export const errorEmbed = (title = "", description = "") =>
-    new Discord.MessageEmbed({...config.embeds.error, title, description})
+    new Discord.MessageEmbed({...config.embeds.fail, title, description})
 
 const makeAuctionDesc = (auction: Auctions) => {
     const char = auction.quick ? "a" : auction.id;

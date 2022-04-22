@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import getConfig from './utils/config';
 import * as dotenv from 'dotenv';
+const nodeCleanup = require('node-cleanup');
 
 dotenv.config();
 const config = getConfig();
@@ -35,7 +36,6 @@ const eventsLoading = (async function loadEvents(dir = path.resolve(__dirname, "
 
 discordLogger.info("Loading all commands...");
 import Command from './structures/Command';
-import {pool} from "./db";
 
 export const commands = new Discord.Collection<string, Command>();
 const cmdsLoading = (async function loadCommands(dir = path.resolve(__dirname, "./commands")) {
@@ -58,8 +58,13 @@ const cmdsLoading = (async function loadCommands(dir = path.resolve(__dirname, "
     }
 })();
 
+nodeCleanup((exitCode?: number, signal?: string) => {
+    if (signal === 'SIGINT')
+        discordLogger.info('Shutting down...');
+});
+
 Promise.all([eventsLoading, cmdsLoading]).then(() => {
     discordLogger.info("Finished loading commands and events.");
     discordLogger.info(`Connecting to Discord...`);
-    client.login(config.token);
+    client.login(config.token).then();
 });

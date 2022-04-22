@@ -10,5 +10,7 @@ devGuild: "964517482708758538"
 embeds:
   primary:
     color: "#548CFF"
-  error:
+  fail:
     color: "#F14A16"
+  success:
+    color: "#00FF00"

@@ -6,6 +6,32 @@ import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
 import {client} from "../index";
 import {currencyId} from "../utils/helpers";
+import Confirmation from "../structures/Confirmation";
+import {Auctions} from "../db/tables";
+import moment from "moment";
+
+
+function checkFunc(auction: Auctions, userId: string, bidAmount: number): () => Promise<boolean> {
+    return async (): Promise<boolean> => {
+        const newAuction = await DB.getAuction(auction.id);
+
+        if (newAuction == null) throw new Error("There are no auctions at the moment.");
+        if (auction.card_code != newAuction.card_code) throw new Error("That card is no longer in the auctions.");
+        if (new Date() > newAuction.end_time) throw new Error("This auction has expired.");
+
+        let {amount: userAmount} = await DB.getInvItem(userId, newAuction.currency_id);
+        if (userId == newAuction.current_bidder) userAmount += newAuction.current_bid;
+
+        const minRaise = (moment(new Date()).add(2, 'm').toDate()) >= auction.end_time ? 9 : 0
+
+        if (bidAmount <= newAuction.current_bid + minRaise) {
+            if (minRaise == 0) throw new Error("You must bid greater than the current bid.");
+            else throw new Error("You must bid greater than the current bid + minimum raise.");
+        } else if (userAmount < bidAmount) return false;
+
+        return true;
+    }
+}
 
 
 export default class BidCommand extends SlashCommand {
@@ -26,24 +52,25 @@ export default class BidCommand extends SlashCommand {
         }
 
         const embed = bidEmbed(auction, interaction.user.id, amount);
+        const passDesc = "Your bid has been placed successfully.";
+        const failDesc = "Your bid could not be placed.";
+        const cancelDesc = "Your bid was not placed.";
 
-        await interaction.reply({
-            embeds: [embed]
-        });
+        if (await new Confirmation(interaction, checkFunc(auction, interaction.user.id, amount), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
+            auction = await DB.placeBid(slot, interaction.user.id, amount);
 
-        auction = await DB.placeBid(slot, interaction.user.id, amount);
-
-        if (interaction.user.id != auction.current_bidder) {
-            const user = await client.users.fetch(auction.current_bidder);
-            const newAuction = await DB.getAuction(slot);
-            if (newAuction == null) {
-                return await interaction.reply({
-                    content: `There is no card in auction \`slot ${slot}\`.`,
-                    ephemeral: true
-                })
+            if (interaction.user.id != auction.current_bidder) {
+                const user = await client.users.fetch(auction.current_bidder);
+                const newAuction = await DB.getAuction(slot);
+                if (newAuction == null) {
+                    return await interaction.reply({
+                        content: `There is no card in auction \`slot ${slot}\`.`,
+                        ephemeral: true
+                    })
+                }
+                const message = (`You have been outbid by <@${newAuction.current_bidder}> with a bid of **${newAuction.current_bid} ${currencyId[newAuction.currency_id]}** on ${newAuction.card_details}!`)
+                await user.send(message);
             }
-            const message = (`You have been outbid by <@${newAuction.current_bidder}> with a bid of **${newAuction.current_bid} ${currencyId[newAuction.currency_id]}** on ${newAuction.card_details}!`)
-            await user.send(message);
         }
     }
 

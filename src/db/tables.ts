@@ -11,3 +11,9 @@ export interface Auctions {
     owner_id: string,
     start_bid: number
 }
+
+export interface Inventory {
+    user_id: string,
+    item_id: number,
+    amount: number
+}

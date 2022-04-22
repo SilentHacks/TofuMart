@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import {Client} from "discord.js";
 
 export default class Event {
     name: string;

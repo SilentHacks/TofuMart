@@ -1,4 +1,4 @@
-import {Auctions} from "./tables";
+import {Auctions, Inventory} from "./tables";
 import moment from "moment";
 
 const {Pool} = require('pg');
@@ -64,6 +64,14 @@ class DB {
             await pool.query('UPDATE auctions SET end_time = $1 WHERE card_code = $2', [newEnd, auction.card_code]);
 
         return auction;
+    }
+
+    public static async getInv(userId: string): Promise<Array<Inventory>> {
+        return await this.fetch('SELECT * FROM inventory WHERE user_id = $1', [userId]);
+    }
+
+    public static async getInvItem(userId: string, itemId: number): Promise<Inventory> {
+        return await this.fetchRow('SELECT * FROM inventory WHERE user_id = $1', [userId]);
     }
 
 }

@@ -11,7 +11,8 @@ export type DiscordBotConfig = {
     devGuild: string,
     embeds: {
         primary: APIEmbed
-        error: APIEmbed
+        fail: APIEmbed
+        success: APIEmbed
     }
 }
 
