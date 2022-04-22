@@ -1,0 +1,14 @@
+# Discord Bot Core
+# This file must be placed in the same folder as where you run `npm start` or `node .` (for ./dist)
+
+devGuild: "964517482708758538"
+
+# =====================================
+# =           STYLE OPTIONS           =
+# =====================================
+
+embeds:
+  primary:
+    color: "#548CFF"
+  error:
+    color: "#F14A16"
