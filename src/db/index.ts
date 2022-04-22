@@ -71,7 +71,7 @@ class DB {
     }
 
     public static async getInvItem(userId: string, itemId: number): Promise<Inventory> {
-        return await this.fetchRow('SELECT * FROM inventory WHERE user_id = $1', [userId]);
+        return await this.fetchRow('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, itemId]);
     }
 
 }
