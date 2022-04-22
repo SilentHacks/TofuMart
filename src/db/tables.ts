@@ -17,3 +17,20 @@ export interface Inventory {
     item_id: number,
     amount: number
 }
+
+export interface Queue {
+    id: number,
+    owner_id: string,
+    card_code: string,
+    card_details: string,
+    image_url: string,
+    duration: number, // minutes
+    currency_id: number,
+    start_price: number
+}
+
+export interface Users {
+    user_id: string,
+    cards: Array<string>,
+    blacklisted: boolean
+}

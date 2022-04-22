@@ -6,9 +6,64 @@ import SlashCommand from '../structures/Command';
 import {RESTPostAPIApplicationCommandsJSONBody} from 'discord-api-types';
 import {ApplicationCommandData} from 'discord.js';
 import getConfig from "../utils/config";
+import DB, {pool} from "../db";
+import {sendMessage} from "../utils/helpers";
 
 const truthyFilter = <T>(x: T | false | undefined | "" | 0): x is T => !!x;
 const config = getConfig();
+
+
+function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function loop() {
+    while (client.isReady()) {
+        await auctionLoop();
+        await delay(300000);
+    }
+}
+
+async function auctionLoop() {
+    console.log('Entered')
+    const client = await pool.connect();
+
+    // Check auction loop
+    discordLogger.info('Fetching auctions...');
+    const auctions = await DB.getFinishedAuctions(false, client);
+    for (let auction of auctions) {
+        try {
+            client.query('BEGIN');
+
+            // Give card to winner
+            if (auction.current_bidder) {
+                discordLogger.info(`Ending auction slot ${auction.id} - ${auction.card_code}`);
+                await DB.endAuction(auction);
+                await sendMessage(auction.current_bidder, 'Congrats you won the auction :smile:')
+                await new Promise(r => setTimeout(r, 3000)); // Sleep 3 seconds
+            }
+
+            // Pop next card from queue into current auctions
+            discordLogger.info('Checking queue...');
+            const nextCard = await DB.getFromQueue(client);
+            if (nextCard) {
+                discordLogger.info(`Replacing auction with ${nextCard.card_code} from queue`);
+                await DB.updateAuction(auction.id, nextCard, client);
+                discordLogger.info('Updated auction')
+            } else {
+                discordLogger.info('No cards found in queue')
+            }
+
+            client.query('COMMIT');
+        } catch (e) {
+            client.query('ROLLBACK');
+            throw e;
+        }
+    }
+
+    client.release();
+    discordLogger.info('Finished auction loop');
+}
 
 export default class ReadyEvent extends Event {
     constructor() {
@@ -65,16 +120,19 @@ export default class ReadyEvent extends Event {
                     discordLogger.info(`Registered command ${command.name}.`);
                 } else {
                     discordLogger.debug(`Editing command ${command.name}...`);
-                    commandData.edit(buildSlashCommand(command) as ApplicationCommandData);
+                    await commandData.edit(buildSlashCommand(command) as ApplicationCommandData);
                     discordLogger.debug(`Edited command ${command.name}.`);
                 }
             }
         }
+
+        loop().then();
+        // setInterval(loop, 300000);
     }
 }
 
 function buildSlashCommand(command: SlashCommand): RESTPostAPIApplicationCommandsJSONBody {
-    var data = command.build(client);
+    let data = command.build(client);
     if (data instanceof SlashCommandBuilder) data = data.toJSON();
 
     return data;

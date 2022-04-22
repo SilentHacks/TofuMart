@@ -32,13 +32,13 @@ export default class Confirmation {
         this.failDesc = failDesc;
         this.cancelDesc = cancelDesc;
 
-        this.title = options ? options.title : undefined;
-        this.description = options ? options.description : undefined;
-        this.footer = options ? options.footer : undefined;
-        this.imageUrl = options ? options.imageUrl : undefined;
-        this.thumbnailUrl = options ? options.thumbnailUrl : undefined;
+        this.title = options?.title;
+        this.description = options?.description;
+        this.footer = options?.footer;
+        this.imageUrl = options?.imageUrl;
+        this.thumbnailUrl = options?.thumbnailUrl;
 
-        this.embed = options ? options.embed : undefined;
+        this.embed = options?.embed;
         this.reactFuncs = new Map<string, Function>([
             ['confirm', this.confirmFunc],
             ['cancel', this.cancelFunc]

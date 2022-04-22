@@ -2,6 +2,7 @@
 # This file must be placed in the same folder as where you run `npm start` or `node .` (for ./dist)
 
 devGuild: "964517482708758538"
+botId: "958395272034152478"
 
 # =====================================
 # =           STYLE OPTIONS           =

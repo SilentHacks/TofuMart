@@ -9,6 +9,7 @@ const logger = createLogger('config');
 export type DiscordBotConfig = {
     token: string,
     devGuild: string,
+    botId: string,
     embeds: {
         primary: APIEmbed
         fail: APIEmbed
