@@ -1,12 +1,10 @@
 import Discord from 'discord.js';
 import getConfig from './config';
-import {Auctions} from "../db/tables";
+import {Auctions, Inventory} from "../db/tables";
 import {currencyEmotes, currencyId} from "./helpers";
 
 const config = getConfig();
 
-export const primaryEmbed = (title = "", description = "") =>
-    new Discord.MessageEmbed({...config.embeds.primary, title, description})
 
 export const errorEmbed = (title = "", description = "") =>
     new Discord.MessageEmbed({...config.embeds.fail, title, description})
@@ -77,5 +75,18 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
         thumbnail: {
             url: auction.image_url
         }
+    })
+}
+
+export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
+    let description = `Showing <@${userId}>'s inventory\n\n`;
+    for (let row of userInv) {
+        description += `${currencyEmotes[row.item_id]} **${row.amount}** · \`${currencyId[row.item_id]}\`\n`
+    }
+
+    return new Discord.MessageEmbed({
+        ...config.embeds.primary,
+        title: "Inventory",
+        description: description
     })
 }

@@ -67,7 +67,7 @@ class DB {
     }
 
     public static async getInv(userId: string): Promise<Array<Inventory>> {
-        return await this.fetch('SELECT * FROM inventory WHERE user_id = $1', [userId]);
+        return await this.fetch('SELECT * FROM inventory WHERE user_id = $1 ORDER BY amount DESC', [userId]);
     }
 
     public static async getInvItem(userId: string, itemId: number): Promise<Inventory> {
