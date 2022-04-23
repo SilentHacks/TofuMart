@@ -52,15 +52,16 @@ class DB {
 
     public static async endAuction(auction: Auctions, conn: any = pool) {
         await conn.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [auction.card_code, auction.current_bidder]);
+        await conn.query('UPDATE auctions SET sent_dm = TRUE WHERE id = $1', [auction.id]);
     }
 
     public static async updateAuction(slot: number, nextCard: Queue, conn: any = pool) {
         await conn.query(
             "UPDATE auctions SET card_code = $1, currency_id = $2, current_bid = $3, " +
-            "current_bidder = $4, end_time = CURRENT_TIMESTAMP + INTERVAL '$5 minutes', " +
+            "current_bidder = $4, end_time = $5, " +
             "image_url = $6, card_details = $7, owner_id = $8 WHERE id = $9",
             [nextCard.card_code, nextCard.currency_id, nextCard.start_price,
-                config.botId, nextCard.duration,
+                config.botId, moment(new Date()).add(nextCard.duration, 'm').toDate(),
                 nextCard.image_url, nextCard.card_details, nextCard.owner_id, slot]);
         await conn.query('DELETE FROM queue WHERE id = $1', [nextCard.id]);
     }
@@ -110,7 +111,18 @@ class DB {
     }
 
     public static async getInvItem(userId: string, itemId: number): Promise<Inventory> {
-        return await this.fetchRow('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, itemId]);
+        let inv: Inventory = await this.fetchRow('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, itemId]);
+        inv ??= {user_id: userId, item_id: itemId, amount: 0};
+
+        return inv;
+    }
+
+    public static async queueCard(card: Queue) {
+        await pool.query(
+            'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price) ' +
+            'VALUES($1, $2, $3, $4, $5, $6, $7)',
+            [card.owner_id, card.card_code, card.card_details, card.image_url, card.duration, card.currency_id, card.start_price]);
+
     }
 
 }

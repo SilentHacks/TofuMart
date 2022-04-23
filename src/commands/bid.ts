@@ -4,7 +4,7 @@ import {bidEmbed} from "../utils/embeds";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
-import {currencyId, sendMessage} from "../utils/helpers";
+import {CurrencyId, sendMessage} from "../utils/helpers";
 import Confirmation from "../structures/Confirmation";
 import {Auctions} from "../db/tables";
 import moment from "moment";
@@ -39,8 +39,8 @@ export default class BidCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
-        const slot = interaction.options.getInteger('slot')!;
-        const amount = interaction.options.getInteger('amount')!;
+        const slot = interaction.options.getInteger('slot', true);
+        const amount = interaction.options.getInteger('amount', true);
 
         let auction = await DB.getAuction(slot);
         if (auction == null) {
@@ -66,7 +66,7 @@ export default class BidCommand extends SlashCommand {
                         ephemeral: true
                     })
                 }
-                const message = (`You have been outbid by <@${newAuction.current_bidder}> with a bid of **${newAuction.current_bid} ${currencyId[newAuction.currency_id]}** on ${newAuction.card_details}!`)
+                const message = (`You have been outbid by <@${newAuction.current_bidder}> with a bid of **${newAuction.current_bid} ${CurrencyId[newAuction.currency_id]}** on ${newAuction.card_details}!`)
                 await sendMessage(auction.current_bidder, message);
             }
         }

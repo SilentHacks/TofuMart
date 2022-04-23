@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import getConfig from './config';
 import {Auctions, Inventory} from "../db/tables";
-import {currencyEmotes, currencyId} from "./helpers";
+import {currencyEmotes, CurrencyId} from "./helpers";
 
 const config = getConfig();
 
@@ -11,7 +11,7 @@ export const errorEmbed = (title = "", description = "") =>
 
 const makeAuctionDesc = (auction: Auctions) => {
     const char = auction.quick ? "a" : auction.id;
-    const currency = currencyId[auction.currency_id];
+    const currency = CurrencyId[auction.currency_id];
     const emote = currencyEmotes[auction.currency_id];
     const unixTime = Math.floor(auction.end_time.getTime() / 1000);
     let endTime = new Date() > auction.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
@@ -66,7 +66,7 @@ export const auctionEmbed = (auction: Auctions) => {
 export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) => {
     const description = `<@${userId}>, would you like to place a bid?\n
     Card: ${auction.card_details}
-    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${currencyId[auction.currency_id]}\`\n\n`;
+    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${CurrencyId[auction.currency_id]}\`\n\n`;
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
@@ -81,7 +81,7 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
 export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
     let description = `Showing <@${userId}>'s inventory\n\n`;
     for (let row of userInv) {
-        description += `${currencyEmotes[row.item_id]} **${row.amount}** · \`${currencyId[row.item_id]}\`\n`
+        description += `${currencyEmotes[row.item_id]} · **${row.amount}** · \`${CurrencyId[row.item_id]}\`\n`
     }
 
     return new Discord.MessageEmbed({

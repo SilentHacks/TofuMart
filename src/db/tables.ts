@@ -9,7 +9,7 @@ export interface Auctions {
     image_url: string,
     card_details: string,
     owner_id: string,
-    start_bid: number
+    sent_dm: boolean
 }
 
 export interface Inventory {

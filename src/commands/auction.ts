@@ -3,7 +3,6 @@ import {Client, CommandInteraction} from "discord.js";
 import {auctionEmbed, auctionListEmbed} from "../utils/embeds";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
-import buildAuction from "../utils/imageBuilder"
 import DB from "../db/index"
 
 const {MessageAttachment} = require('discord.js');
@@ -31,10 +30,6 @@ export default class AuctionCommand extends SlashCommand {
         }
 
         const auctions = await DB.getAuctions();
-        const imageUrls = auctions.map(a => a.image_url);
-
-        await buildAuction(imageUrls);
-
         const file = new MessageAttachment("./src/resources/auction.png");
         const embed = auctionListEmbed(auctions);
 
