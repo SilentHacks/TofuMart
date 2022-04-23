@@ -13,6 +13,8 @@ import buildAuction from "../utils/imageBuilder";
 const truthyFilter = <T>(x: T | false | undefined | "" | 0): x is T => !!x;
 const config = getConfig();
 
+const GLOBAL = false;
+
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -100,7 +102,7 @@ export default class ReadyEvent extends Event {
 
             for (const command of commandsToDeploy) {
                 discordLogger.debug(`${deploy ? "Deploying" : "Registering"} command ${command.name}...`);
-                await client.application?.commands.create(buildSlashCommand(command), config.devGuild);
+                await client.application?.commands.create(buildSlashCommand(command), GLOBAL ? undefined : config.devGuild);
                 discordLogger.debug(`${deploy ? "Deployed" : "Registered"} command ${command.name}.`);
             }
 

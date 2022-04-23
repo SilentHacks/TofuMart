@@ -10,7 +10,6 @@ export const client = new Discord.Client({
     intents: [
         'GUILD_MESSAGE_REACTIONS',
         'GUILD_MESSAGES',
-        'GUILD_WEBHOOKS',
         'GUILD_EMOJIS_AND_STICKERS',
         'GUILD_INTEGRATIONS',
         'DIRECT_MESSAGES',
