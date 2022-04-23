@@ -1,36 +1,39 @@
-import {ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, User} from "discord.js";
+import {
+    ButtonInteraction,
+    CommandInteraction,
+    Message,
+    MessageActionRow,
+    MessageButton,
+    MessageEmbed,
+    User
+} from "discord.js";
 import getConfig from "../utils/config";
 
 const config = getConfig();
 
 export default class Confirmation {
-    private interaction: CommandInteraction;
     private user: User;
-    private readonly checkFunc: () => Promise<boolean>;
-
-    private readonly passDesc: string;
-    private readonly cancelDesc: string;
-    private failDesc: string;
     private confirmed: boolean = false;
 
-    private readonly title: string | undefined;
-    private readonly description: string | undefined;
-    private readonly footer: string | undefined;
-    private readonly imageUrl: string | undefined;
-    private readonly thumbnailUrl: string | undefined;
+    private readonly title?: string;
+    private readonly description?: string;
+    private readonly footer?: string;
+    private readonly imageUrl?: string;
+    private readonly thumbnailUrl?: string;
 
-    private embed: MessageEmbed | undefined;
+    private embed?: MessageEmbed;
+    private message?: Message;
     private reactFuncs: Map<string, Function>;
 
-    constructor(interaction: CommandInteraction, checkFunc: () => Promise<boolean>, passDesc: string, failDesc: string, cancelDesc: string,
-                options?: { title?: string; description?: string; footer?: string; imageUrl?: string; thumbnailUrl?: string; embed?: MessageEmbed }) {
-        this.interaction = interaction;
+    constructor(
+        private interaction: CommandInteraction,
+        private readonly checkFunc: () => Promise<boolean>,
+        private readonly passDesc: string,
+        private failDesc: string,
+        private readonly cancelDesc: string,
+        options?: { title?: string; description?: string; footer?: string; imageUrl?: string; thumbnailUrl?: string; embed?: MessageEmbed }
+    ) {
         this.user = interaction.user;
-        this.checkFunc = checkFunc;
-
-        this.passDesc = passDesc;
-        this.failDesc = failDesc;
-        this.cancelDesc = cancelDesc;
 
         this.title = options?.title;
         this.description = options?.description;
@@ -69,7 +72,7 @@ export default class Confirmation {
                     .setStyle('SUCCESS')
             ]);
 
-        return await this.interaction.reply({embeds: [this.embed], components: [row], fetchReply: true});
+        this.message = await this.interaction.reply({embeds: [this.embed], components: [row], fetchReply: true}) as Message;
     }
 
     private async updateEmbed(buttons: boolean = false) {
@@ -99,15 +102,13 @@ export default class Confirmation {
     }
 
     public async confirm(): Promise<boolean> {
-        const message = await this.setup();
+        await this.setup();
 
-        const filter = (i: ButtonInteraction) => {
-            return i.message.id == message.id && i.user.id === this.interaction.user.id && this.reactFuncs.has(i.customId);
-        };
+        const filter = (i: ButtonInteraction) => i.user.id === this.interaction.user.id
 
         let interaction: ButtonInteraction;
         try {
-            interaction = await this.interaction.channel!.awaitMessageComponent({
+            interaction = await this.message!.awaitMessageComponent({
                 filter,
                 componentType: 'BUTTON',
                 time: 60000

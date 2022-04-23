@@ -5,11 +5,9 @@ import {Queue} from "../db/tables";
 const config = getConfig();
 
 export default class Trader {
-    private interaction: CommandInteraction;
     private user: User;
 
-    constructor(interaction: CommandInteraction) {
-        this.interaction = interaction;
+    constructor(private interaction: CommandInteraction) {
         this.user = interaction.user;
     }
 

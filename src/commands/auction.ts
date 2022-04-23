@@ -13,7 +13,7 @@ export default class AuctionCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
-        const quick = interaction.options.getBoolean('quick');
+        // const quick = interaction.options.getBoolean('quick');
         const slot = interaction.options.getInteger('slot');
 
         if (slot != null) {
@@ -43,7 +43,7 @@ export default class AuctionCommand extends SlashCommand {
         return new SlashCommandBuilder()
             .setName(this.name)
             .setDescription(this.description)
-            .addBooleanOption(boolean => boolean.setName('quick').setDescription('Quick auctions').setRequired(false))
+            // .addBooleanOption(boolean => boolean.setName('quick').setDescription('Quick auctions').setRequired(false))
             .addIntegerOption(integer => integer.setName('slot').setDescription('Slot number').setRequired(false).setMinValue(1).setMaxValue(10))
             .toJSON();
     }
