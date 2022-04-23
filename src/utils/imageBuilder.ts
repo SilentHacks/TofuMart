@@ -1,7 +1,7 @@
 import path from "path";
 import fetch from "node-fetch";
 
-const sharp = require("sharp");
+import sharp from "sharp";
 
 const cardWidth = 300;
 const cardHeight = 450;
@@ -48,6 +48,7 @@ export default async function buildAuctionList(imageUrls: Array<string>) {
             }
         })
             .composite(composites)
+            .jpeg({quality: 80, progressive: true})
             .toFile(`${dir}/auction.jpg`);
     } catch (error) {
         console.log(error);
