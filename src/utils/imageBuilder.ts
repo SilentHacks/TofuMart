@@ -48,7 +48,7 @@ export default async function buildAuctionList(imageUrls: Array<string>) {
             }
         })
             .composite(composites)
-            .toFile(`${dir}/auction.png`);
+            .toFile(`${dir}/auction.jpg`);
     } catch (error) {
         console.log(error);
     }

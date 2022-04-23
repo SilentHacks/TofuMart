@@ -19,7 +19,7 @@ const makeAuctionDesc = (auction: Auctions) => {
     return `${emote} **${char}** · \`${auction.current_bid} ${currency}\` by <@${auction.current_bidder}> - ${endTime}\n`;
 }
 
-export const auctionListEmbed = (auctions: Array<Auctions>, imageUrl = "auction.png") => {
+export const auctionListEmbed = (auctions: Array<Auctions>, imageUrl = "auction.jpg") => {
     let description = "";
 
     for (let auction of auctions) {

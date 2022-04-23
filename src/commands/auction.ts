@@ -30,7 +30,7 @@ export default class AuctionCommand extends SlashCommand {
         }
 
         const auctions = await DB.getAuctions();
-        const file = new MessageAttachment("./src/resources/auction.png");
+        const file = new MessageAttachment("./src/resources/auction.jpg");
         const embed = auctionListEmbed(auctions);
 
         await interaction.reply({
