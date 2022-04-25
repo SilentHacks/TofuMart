@@ -1,6 +1,5 @@
 import SlashCommand from "../structures/Command";
 import {Client, CommandInteraction} from "discord.js";
-import {invEmbed} from "../utils/embeds";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"

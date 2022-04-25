@@ -15,10 +15,12 @@ export const currencyEmotes: Record<number, string> = {
     [CurrencyId.Keys]: ":key:"
 }
 
-export async function sendMessage(user: User | string, message: string) {
+export const sendMessage = async (user: User | string, message: string) => {
     try {
         if (typeof user === 'string') user = await client.users.fetch(user);
         await user.send(message);
     } catch {
     }
 }
+
+export const delay = async (ms: number) => new Promise(res => setTimeout(res, ms));
