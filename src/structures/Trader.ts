@@ -25,12 +25,12 @@ export default class Trader {
             return;
         }
 
-        console.log(collected);
+        // console.log(collected);
 
         return {
             id: NaN,
             owner_id: this.user.id,
-            card_code: 'lmao',
+            card_code: Buffer.from(Math.random().toString()).toString("base64").substring(10, 5),
             card_details: 'bunch of random garble',
             image_url: collected.first()?.embeds[0].image?.url!,
             duration: 360, // minutes

@@ -9,6 +9,7 @@ import {
     Message
 } from "discord.js";
 import {MessageButtonStyles} from "discord.js/typings/enums";
+import _ from "lodash";
 
 interface ButtonOption {
     emoji?: EmojiIdentifierResolvable;
@@ -28,22 +29,33 @@ class Paginator {
      * @param {string} [footerText] - Optional footer text, will show `Text 1 of 5` if you pass `Text`, for example
      * @param {number} timeout - How long button need to be active
      * @param {ButtonOption[]} options - optional options for the buttons
+     * @param {(elems: any[], userId?: string) => MessageEmbed} embedCallback - optional callback to chunk embeds
      */
     constructor(
         private interaction: CommandInteraction,
-        private readonly pages: MessageEmbed[],
+        private readonly pages: MessageEmbed[] | any[],
         private readonly footerText: string = "Page",
         private readonly timeout: number = 60000,
-        private readonly options?: ButtonOption[]
+        private readonly options?: ButtonOption[],
+        embedCallback?: (elems: any[], userId?: string) => MessageEmbed
     ) {
         if (options && options.length != 4) throw new TypeError("You must pass 4 buttons");
 
-        this.pages = pages.map((page, index) => {
+        if (embedCallback !== undefined) this.pages = this.chunkEmbeds(this.pages, embedCallback);
+
+        this.pages = this.pages.map((page: MessageEmbed, index) => {
             if (page.footer && (page.footer.text || page.footer.iconURL)) return page;
             return page.setFooter({
-                text: `${footerText} ${index + 1} of ${pages.length}`
+                text: `${footerText} ${index + 1} of ${this.pages.length}`
             });
         });
+    }
+
+    /**
+     * Get an array of embeds to be passed into the paginator
+     */
+    private chunkEmbeds<T>(content: Array<T>, embedCallback: (elems: Array<T>) => MessageEmbed): Array<MessageEmbed> {
+        return _.chunk(content, 10).map((value) => embedCallback(value));
     }
 
     /**
@@ -102,7 +114,7 @@ class Paginator {
         const curPage = await this.interaction.reply({
             fetchReply: true,
             embeds: [this.pages[this.index]],
-            components: [this.getComponents()],
+            components: [this.getComponents(this.pages.length < 2)],
         }) as Message;
 
         // Return early if no need to paginate

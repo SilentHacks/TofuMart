@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 import getConfig from './config';
-import {Auctions, Inventory} from "../db/tables";
+import {Auctions, Inventory, Queue} from "../db/tables";
 import {currencyEmotes, CurrencyId} from "./helpers";
 
 const config = getConfig();
@@ -89,4 +89,21 @@ export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
         title: "Inventory",
         description: description
     })
+}
+
+export const queueEmbed = (userId: string) => {
+    return (queue: Array<Queue>) => {
+        let description = "Showing Queued Auction Cards In Order\n\n";
+        let index = 1;
+        for (let row of queue) {
+            description += `**${index++}** · ${row.card_details} · Starting bid: ` +
+            `${row.start_price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
+        }
+
+        return new Discord.MessageEmbed({
+            ...config.embeds.primary,
+            title: "Auction Queue",
+            description: description
+        })
+    }
 }
