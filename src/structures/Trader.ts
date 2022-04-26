@@ -15,7 +15,41 @@ export default class Trader {
 
     public async claim(): Promise<void> {
         const user = await DB.getUser(this.user.id);
-        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'})
+        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
+        const cardCode = user.cards.pop();
+
+        await this.interaction.deferReply();
+
+        const check = `<@${this.user.id}>, would you like to accept \`${cardCode}\` from <@${config.tofuId}>?`;
+        const filter = (msg: Message) => {
+            return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId && msg.content == check;
+        };
+        let message: Message;
+
+        const checkFilter = (reaction: MessageReaction, user: User) => {
+            return reaction.emoji.name === '☑️' && user.id === this.user.id;
+        };
+
+        await this.interaction.channel!.send(`t!give <@${this.user.id}> ${cardCode}`);
+
+        try {
+            const collected = await this.interaction.channel!.awaitMessages({filter, max: 1, time: 10000, errors: ['time']});
+            message = collected.first()!;
+        } catch (e) {
+            await this.interaction.editReply({content: 'The `give` message could not be found.'});
+            return;
+        }
+
+        try {
+            await message.awaitReactions({filter: checkFilter, max: 1, time: 30000, errors: ['time']});
+        } catch (e) {
+            return;
+        }
+
+        await delay(2);
+        await message.react('✅');
+
+        await DB.claimCard(this.user.id, user.cards.length);
     }
 
     public async buy(): Promise<void> {
@@ -29,7 +63,7 @@ export default class Trader {
         // If it goes green, the purchase was successful
 
         // const startCheck = `<@${this.user.id}>, would you like to trade with <@${config.tofuId}>?`;
-        const startCheck = `<@${config.tofuId}>, would you like to trade with <@${this.user.id}>?`;
+        // const startCheck = `<@${config.tofuId}>, would you like to trade with <@${this.user.id}>?`;
 
         const startFilter = (msg: Message) => {
             return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId // && msg.content == startCheck;

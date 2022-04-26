@@ -151,7 +151,7 @@ class DB {
             await client.query('BEGIN');
 
             await client.query('UPDATE market SET sold = TRUE WHERE id = $1', [card.id]);
-            await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING');
+            await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING', [userId]);
             await client.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [card.card_code, userId]);
             await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, userId]);
             await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, card.owner_id]);
@@ -188,6 +188,10 @@ class DB {
         } finally {
             client.release();
         }
+    }
+
+    public static async claimCard(userId: string, index: number): Promise<void> {
+        await pool.query('UPDATE users SET cards = cards[1:$1] WHERE user_id = $2', [index, userId]);
     }
 
 }

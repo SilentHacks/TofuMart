@@ -14,9 +14,19 @@ const makeAuctionDesc = (auction: Auctions) => {
     const currency = CurrencyId[auction.currency_id];
     const emote = currencyEmotes[auction.currency_id];
     const unixTime = Math.floor(auction.end_time.getTime() / 1000);
-    let endTime = new Date() > auction.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
+    const endTime = new Date() > auction.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
 
     return `${emote} **${char}** · \`${auction.current_bid} ${currency}\` by <@${auction.current_bidder}> - ${endTime}\n`;
+}
+
+const makeMarketDesc = (market: Market) => {
+    const currency = CurrencyId[market.currency_id];
+    const emote = currencyEmotes[market.currency_id];
+    const unixTime = Math.floor(market.end_time.getTime() / 1000);
+    const endTime = new Date() > market.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
+    const sold = market.sold ? "**SOLD**" : endTime;
+
+    return `${emote} **${market.id}** · Price: \`${market.price} ${currency}\` - ${sold}\n`;
 }
 
 export const auctionListEmbed = (auctions: Array<Auctions>, imageUrl = "auction.jpg") => {
@@ -125,18 +135,47 @@ export const queueEmbed = (userId: string, market: boolean) => {
     }
 }
 
+export const marketCardEmbed = (market: Market) => {
+    return new Discord.MessageEmbed({
+        ...config.embeds.primary,
+        title: `Market - Slot ${market.id}`,
+        fields: [
+            {
+                name: "Owner",
+                value: `Showing card owned by <@${market.owner_id}>`,
+                inline: false
+            },
+            {
+                name: "Card",
+                value: market.card_details,
+                inline: false
+            },
+            {
+                name: `Price`,
+                value: makeMarketDesc(market),
+                inline: false
+            }
+        ],
+        image: {
+            url: market.image_url,
+        }
+    })
+}
+
 export const marketEmbed = (userId: string) => {
     return (market: Array<Market>) => {
-        let description = "Showing Market Cards\n\n";
+        const ended = new Date() > market[0].end_time;
+        let description = "";
         let index = 1;
         for (let row of market) {
             description += `**${index++}** · ${row.card_details} · Price: ` +
-                `${row.price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
+                `${row.price} ${currencyEmotes[row.currency_id]}${row.sold ? " · **SOLD**" : ""}` +
+                `${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
         }
 
         return new Discord.MessageEmbed({
             ...config.embeds.primary,
-            title: "Market",
+            title: `Marketplace${ended ? " - Ended" : ""}`,
             description: description
         })
     }

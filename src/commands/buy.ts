@@ -29,6 +29,7 @@ const checkFunc = (market: Market, userId: string): () => Promise<boolean> => {
 
 const marketBuy = async (interaction: CommandInteraction, slot: number) => {
     const card = await DB.getMarketCard(slot);
+    if (card == null) return await interaction.reply({content: `There is no card in market \`slot ${slot}\`.`, ephemeral: true});
 
     const embed = buyEmbed(card, interaction.user.id);
     const passDesc = "You have successfully purchased that card.";
