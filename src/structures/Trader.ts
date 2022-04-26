@@ -2,6 +2,7 @@ import {Collection, CommandInteraction, Message, MessageReaction, User} from "di
 import getConfig from "../utils/config";
 import {Queue} from "../db/tables";
 import {delay} from "../utils/helpers";
+import DB from "../db";
 
 const config = getConfig();
 
@@ -10,6 +11,11 @@ export default class Trader {
 
     constructor(private interaction: CommandInteraction) {
         this.user = interaction.user;
+    }
+
+    public async claim(): Promise<void> {
+        const user = await DB.getUser(this.user.id);
+        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'})
     }
 
     public async buy(): Promise<void> {

@@ -60,6 +60,9 @@ const marketLoop = async () => {
     const numQueue = await DB.getNumQueue(true);
     if (numQueue < 1) return discordLogger.info('No cards in market queue');
 
+    const tempCard = await DB.getMarketCard(0);
+    if (tempCard && new Date() < tempCard.end_time) return discordLogger.info('Not time to refresh market');
+
     discordLogger.info('Refreshing market...');
     await DB.refreshMarket();
     discordLogger.info('Finished market loop');
@@ -75,8 +78,8 @@ export default class LoopEvent extends Event {
         const loopTime = 5; // Loop time in minutes
 
         while (client.isReady()) {
-            await auctionLoop();
             await marketLoop();
+            await auctionLoop();
             await delay(60 * loopTime);
         }
     }

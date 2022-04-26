@@ -94,10 +94,12 @@ export const buyEmbed = (card: Market, userId: string) => {
 }
 
 export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
-    let description = `Showing <@${userId}>'s inventory\n\n`;
-    for (let row of userInv) {
-        description += `${currencyEmotes[row.item_id]} · **${row.amount}** · \`${CurrencyId[row.item_id]}\`\n`
-    }
+    let description = `Items carried by <@${userId}>\n\n`;
+    if (userInv.length == 0) description += "This inventory is empty";
+    else
+        for (let row of userInv) {
+            description += `${currencyEmotes[row.item_id]} · **${row.amount}** · \`${CurrencyId[row.item_id]}\`\n`
+        }
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
@@ -112,7 +114,7 @@ export const queueEmbed = (userId: string, market: boolean) => {
         let index = 1;
         for (let row of queue) {
             description += `**${index++}** · ${row.card_details} · ${market ? 'Price' : 'Staring bid'}: ` +
-            `${row.start_price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
+                `${row.start_price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
         }
 
         return new Discord.MessageEmbed({

@@ -1,4 +1,4 @@
-import {Auctions, Inventory, Market, Queue} from "./tables";
+import {Auctions, Inventory, Market, Queue, Users} from "./tables";
 import moment from "moment";
 import getConfig from "../utils/config";
 
@@ -32,6 +32,10 @@ class DB {
     private static async fetch(query: string, values?: Array<any>, conn: any = pool): Promise<any> {
         const {rows} = await conn.query(query, values);
         return rows;
+    }
+
+    public static async getUser(userId: string): Promise<Users> {
+        return await this.fetchRow('SELECT * FROM users WHERE user_id = $1', [userId]);
     }
 
     public static async getAuctions(): Promise<Array<Auctions>> {
@@ -149,6 +153,8 @@ class DB {
             await client.query('UPDATE market SET sold = TRUE WHERE id = $1', [card.id]);
             await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING');
             await client.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [card.card_code, userId]);
+            await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, userId]);
+            await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, card.owner_id]);
 
             await client.query('COMMIT');
         } catch (e) {
