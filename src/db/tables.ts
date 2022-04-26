@@ -34,3 +34,15 @@ export interface Users {
     cards: Array<string>,
     blacklisted: boolean
 }
+
+export interface Market {
+    id: number,
+    card_code: string,
+    price: number,
+    currency_id: number,
+    end_time: Date,
+    image_url: string,
+    card_details: string,
+    owner_id: string,
+    sold: boolean
+}

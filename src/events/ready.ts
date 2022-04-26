@@ -7,18 +7,13 @@ import {RESTPostAPIApplicationCommandsJSONBody} from 'discord-api-types';
 import {ApplicationCommandData} from 'discord.js';
 import getConfig from "../utils/config";
 import DB, {pool} from "../db";
-import {sendMessage} from "../utils/helpers";
+import {delay, sendMessage} from "../utils/helpers";
 import buildAuction from "../utils/imageBuilder";
 
 const truthyFilter = <T>(x: T | false | undefined | "" | 0): x is T => !!x;
 const config = getConfig();
 
 const GLOBAL = false;
-
-
-function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
 
 async function loop() {
     while (client.isReady()) {

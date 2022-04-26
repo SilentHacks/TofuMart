@@ -11,6 +11,7 @@ export type DiscordBotConfig = {
     devGuild: string,
     botId: string,
     tofuId: string,
+    numMarket: number,
     embeds: {
         primary: APIEmbed
         fail: APIEmbed

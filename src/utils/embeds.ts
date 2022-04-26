@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 import getConfig from './config';
-import {Auctions, Inventory, Queue} from "../db/tables";
+import {Auctions, Inventory, Market, Queue} from "../db/tables";
 import {currencyEmotes, CurrencyId} from "./helpers";
 
 const config = getConfig();
@@ -78,6 +78,21 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
     })
 }
 
+export const buyEmbed = (card: Market, userId: string) => {
+    const description = `<@${userId}>, would you like to buy this card?\n
+    Card: ${card.card_details}
+    Price: ${currencyEmotes[card.currency_id]} \`${card.price} ${CurrencyId[card.currency_id]}\`\n\n`;
+
+    return new Discord.MessageEmbed({
+        ...config.embeds.primary,
+        title: "Purchase bid",
+        description: description,
+        thumbnail: {
+            url: card.image_url
+        }
+    })
+}
+
 export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
     let description = `Showing <@${userId}>'s inventory\n\n`;
     for (let row of userInv) {
@@ -103,6 +118,23 @@ export const queueEmbed = (userId: string) => {
         return new Discord.MessageEmbed({
             ...config.embeds.primary,
             title: "Auction Queue",
+            description: description
+        })
+    }
+}
+
+export const marketEmbed = (userId: string) => {
+    return (market: Array<Market>) => {
+        let description = "Showing Market Cards\n\n";
+        let index = 1;
+        for (let row of market) {
+            description += `**${index++}** · ${row.card_details} · Price: ` +
+                `${row.price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
+        }
+
+        return new Discord.MessageEmbed({
+            ...config.embeds.primary,
+            title: "Market",
             description: description
         })
     }

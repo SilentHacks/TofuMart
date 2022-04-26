@@ -10,7 +10,7 @@ import {Auctions} from "../db/tables";
 import moment from "moment";
 
 
-function checkFunc(auction: Auctions, userId: string, bidAmount: number): () => Promise<boolean> {
+const checkFunc = (auction: Auctions, userId: string, bidAmount: number): () => Promise<boolean> => {
     return async (): Promise<boolean> => {
         const newAuction = await DB.getAuction(auction.id);
 

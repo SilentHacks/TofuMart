@@ -1,4 +1,4 @@
-import {Auctions, Inventory, Queue} from "./tables";
+import {Auctions, Inventory, Market, Queue} from "./tables";
 import moment from "moment";
 import getConfig from "../utils/config";
 
@@ -126,6 +126,33 @@ class DB {
             'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price) ' +
             'VALUES($1, $2, $3, $4, $5, $6, $7)',
             [card.owner_id, card.card_code, card.card_details, card.image_url, card.duration, card.currency_id, card.start_price]);
+    }
+
+    public static async getMarket(): Promise<Array<Market>> {
+        return await this.fetch('SELECT * FROM market ORDER BY id');
+    }
+
+    public static async getMarketCard(id: number): Promise<Market> {
+            return await this.fetchRow('SELECT * FROM market WHERE id = $1', [id]);
+    }
+
+    public static async purchaseCard(card: Market, userId: string): Promise<void> {
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            await client.query('UPDATE market SET sold = TRUE WHERE id = $1', [card.id]);
+            await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING');
+            await client.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [card.card_code, userId]);
+
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
     }
 
 }
