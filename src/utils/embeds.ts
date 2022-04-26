@@ -106,12 +106,12 @@ export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
     })
 }
 
-export const queueEmbed = (userId: string) => {
+export const queueEmbed = (userId: string, market: boolean) => {
     return (queue: Array<Queue>) => {
-        let description = "Showing Queued Auction Cards In Order\n\n";
+        let description = `Showing Queued ${market ? 'Market' : 'Auction'} Cards In Order\n\n`;
         let index = 1;
         for (let row of queue) {
-            description += `**${index++}** · ${row.card_details} · Starting bid: ` +
+            description += `**${index++}** · ${row.card_details} · ${market ? 'Price' : 'Staring bid'}: ` +
             `${row.start_price} ${currencyEmotes[row.currency_id]}${row.owner_id == userId ? ` · **OWNED**` : ''}\n`
         }
 

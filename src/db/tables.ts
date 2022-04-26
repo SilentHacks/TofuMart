@@ -26,7 +26,8 @@ export interface Queue {
     image_url: string,
     duration: number, // minutes
     currency_id: number,
-    start_price: number
+    start_price: number,
+    market: boolean
 }
 
 export interface Users {

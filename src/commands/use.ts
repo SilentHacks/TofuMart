@@ -9,20 +9,24 @@ import Trader from "../structures/Trader";
 
 export default class UseCommand extends SlashCommand {
     constructor() {
-        super("use", "Use a key to list your card.");
+        super("use", "List your card in the auctions/market.");
     }
 
     async exec(interaction: CommandInteraction) {
         const currencyId = parseInt(interaction.options.getString('currency', true));
-        const startBid = (interaction.options.getInteger('start bid') ?? 1) - 1;
+        let start = interaction.options.getInteger('start bid') ?? 1;
+        const market = interaction.options.getSubcommand() == 'slot';
+
+        if (!market) start--;
 
         const {amount: userInv} = await DB.getInvItem(interaction.user.id, CurrencyId.Keys);
-        if (userInv < 1) return await interaction.reply({content: "You do not have any keys.", ephemeral: true});
+        if (userInv < 1) return await interaction.reply({content: `You do not have any ${interaction.options.getSubcommand()}s.`, ephemeral: true});
 
         const card = await (new Trader(interaction)).use();
         if (!card) return;
         card.currency_id = currencyId;
-        card.start_price = startBid;
+        card.start_price = start;
+        card.market = market;
 
         await DB.queueCard(card);
         await interaction.editReply({content: "Your card has been listed."});
@@ -43,7 +47,19 @@ export default class UseCommand extends SlashCommand {
                             .addChoice('Opals', `${CurrencyId.Opals}`)
                             .addChoice('Gold', `${CurrencyId.Gold}`)
                             .addChoice('Clovers', `${CurrencyId.Clovers}`))
-                    .addIntegerOption(integer => integer.setName('start').setDescription('The minimum bid for the auction').setRequired(false).setMinValue(0).setMaxValue(1_000_000)))
+                    .addIntegerOption(integer => integer.setName('start').setDescription('The minimum bid for the auction').setRequired(false).setMinValue(1).setMaxValue(1_000_000)))
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('slot')
+                    .setDescription('Use a slot to add a card to the market')
+                    .addStringOption(option =>
+                        option.setName('currency')
+                            .setDescription('The currency to list the card for')
+                            .setRequired(true)
+                            .addChoice('Opals', `${CurrencyId.Opals}`)
+                            .addChoice('Gold', `${CurrencyId.Gold}`)
+                            .addChoice('Clovers', `${CurrencyId.Clovers}`))
+                    .addIntegerOption(integer => integer.setName('price').setDescription('The price to purchase the card').setRequired(true).setMinValue(1).setMaxValue(10_000_000)))
             .toJSON();
     }
 }

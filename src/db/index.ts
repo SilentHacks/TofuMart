@@ -117,15 +117,15 @@ class DB {
         return inv;
     }
 
-    public static async getQueue(): Promise<Array<Queue>> {
-        return await this.fetch('SELECT * FROM queue ORDER BY id');
+    public static async getQueue(market: boolean): Promise<Array<Queue>> {
+        return await this.fetch('SELECT * FROM queue WHERE market = $1 ORDER BY id', [market]);
     }
 
     public static async queueCard(card: Queue) {
         await pool.query(
-            'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price) ' +
-            'VALUES($1, $2, $3, $4, $5, $6, $7)',
-            [card.owner_id, card.card_code, card.card_details, card.image_url, card.duration, card.currency_id, card.start_price]);
+            'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price, market) ' +
+            'VALUES($1, $2, $3, $4, $5, $6, $7, $8)',
+            [card.owner_id, card.card_code, card.card_details, card.image_url, card.duration, card.currency_id, card.start_price, card.market]);
     }
 
     public static async getMarket(): Promise<Array<Market>> {

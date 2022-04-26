@@ -91,7 +91,8 @@ export default class Trader {
             image_url: collected.first()?.embeds[0].image?.url!,
             duration: 360, // minutes
             currency_id: NaN,
-            start_price: NaN
+            start_price: NaN,
+            market: false
         };
     }
 }
