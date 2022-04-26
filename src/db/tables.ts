@@ -24,7 +24,7 @@ export interface Queue {
     card_code: string,
     card_details: string,
     image_url: string,
-    duration: number, // minutes
+    duration: number | null, // minutes
     currency_id: number,
     start_price: number,
     market: boolean

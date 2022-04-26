@@ -52,7 +52,7 @@ export default class Trader {
         }
 
         // Wait 2s and then add lock reaction
-        await delay(2000);
+        await delay(2);
         await tradeMessage.react('🔒');
 
         // Wait for user to add lock
@@ -89,7 +89,7 @@ export default class Trader {
             card_code: Buffer.from(Math.random().toString()).toString("base64").substring(10, 5),
             card_details: 'bunch of random garble',
             image_url: collected.first()?.embeds[0].image?.url!,
-            duration: 360, // minutes
+            duration: null,
             currency_id: NaN,
             start_price: NaN,
             market: false

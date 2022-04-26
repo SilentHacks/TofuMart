@@ -23,4 +23,4 @@ export const sendMessage = async (user: User | string, message: string) => {
     }
 }
 
-export const delay = async (ms: number) => new Promise(res => setTimeout(res, ms));
+export const delay = async (s: number) => new Promise(res => setTimeout(res, 1000 * s));

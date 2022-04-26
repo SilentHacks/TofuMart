@@ -5,6 +5,9 @@ import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
 import {CurrencyId} from "../utils/helpers";
 import Trader from "../structures/Trader";
+import getConfig from "../utils/config";
+
+const config = getConfig();
 
 
 export default class UseCommand extends SlashCommand {
@@ -27,6 +30,7 @@ export default class UseCommand extends SlashCommand {
         card.currency_id = currencyId;
         card.start_price = start;
         card.market = market;
+        if (!market) card.duration = config.auctionDuration;
 
         await DB.queueCard(card);
         await interaction.editReply({content: "Your card has been listed."});

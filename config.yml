@@ -7,6 +7,10 @@ tofuId: "792827809797898240"
 
 numMarket: 50
 
+# Duration in minutes
+auctionDuration: 300
+marketDuration: 1500
+
 # =====================================
 # =           STYLE OPTIONS           =
 # =====================================

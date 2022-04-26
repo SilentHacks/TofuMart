@@ -34,7 +34,7 @@ class DB {
         return rows;
     }
 
-    public static async getAuctions(quick: boolean = false): Promise<Array<Auctions>> {
+    public static async getAuctions(): Promise<Array<Auctions>> {
         return await this.fetch('SELECT * FROM auctions ORDER BY id');
     }
 
@@ -121,6 +121,10 @@ class DB {
         return await this.fetch('SELECT * FROM queue WHERE market = $1 ORDER BY id', [market]);
     }
 
+    public static async getNumQueue(market: boolean = false): Promise<number> {
+        return await this.fetchVal('SELECT COUNT(*) FROM queue WHERE market = $1', [market]);
+    }
+
     public static async queueCard(card: Queue) {
         await pool.query(
             'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price, market) ' +
@@ -145,6 +149,31 @@ class DB {
             await client.query('UPDATE market SET sold = TRUE WHERE id = $1', [card.id]);
             await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING');
             await client.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [card.card_code, userId]);
+
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+    }
+
+    public static async refreshMarket(): Promise<void> {
+        const client = await pool.connect();
+        const nextRefresh = moment(new Date()).add(config.marketDuration, 'm').toDate();
+
+        try {
+            await client.query('BEGIN');
+
+            await client.query('DELETE FROM market');
+            await client.query('ALTER TABLE market ALTER COLUMN id RESTART');
+            await client.query(
+                'INSERT INTO market(card_code, currency_id, end_time, image_url, card_details, owner_id, price) ' +
+                'SELECT card_code, currency_id, $1, image_url, card_details, owner_id, start_price FROM queue ' +
+                'WHERE market = TRUE ORDER BY id LIMIT $2', [nextRefresh, config.numMarket]
+            );
+            await client.query('DELETE FROM queue WHERE card_code = ANY(SELECT card_code FROM market)');
 
             await client.query('COMMIT');
         } catch (e) {
