@@ -1,4 +1,4 @@
-import {Collection, CommandInteraction, Message, MessageReaction, User} from "discord.js";
+import {CommandInteraction, Message, MessageReaction, User} from "discord.js";
 import getConfig from "../utils/config";
 import {Queue} from "../db/tables";
 import {delay} from "../utils/helpers";
@@ -13,24 +13,8 @@ export default class Trader {
         this.user = interaction.user;
     }
 
-    public async claim(): Promise<void> {
-        const user = await DB.getUser(this.user.id);
-        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
-        const cardCode = user.cards.pop();
-
-        await this.interaction.deferReply();
-
-        const check = `<@${this.user.id}>, would you like to accept \`${cardCode}\` from <@${config.tofuId}>?`;
-        const filter = (msg: Message) => {
-            return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId && msg.content == check;
-        };
+    private async getMessage(filter: (msg: Message) => boolean): Promise<Message | undefined> {
         let message: Message;
-
-        const checkFilter = (reaction: MessageReaction, user: User) => {
-            return reaction.emoji.name === '☑️' && user.id === this.user.id;
-        };
-
-        await this.interaction.channel!.send(`t!give <@${this.user.id}> ${cardCode}`);
 
         try {
             const collected = await this.interaction.channel!.awaitMessages({filter, max: 1, time: 10000, errors: ['time']});
@@ -39,6 +23,31 @@ export default class Trader {
             await this.interaction.editReply({content: 'The `give` message could not be found.'});
             return;
         }
+
+        return message;
+    }
+
+    public async claim(): Promise<void> {
+        const user = await DB.getUser(this.user.id);
+        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
+        const cardCode = user.cards.pop();
+
+        await this.interaction.deferReply();
+
+        const check = `<@${this.user.id}>, would you like to accept \`${cardCode}\` from <@${config.botId}>?`;
+        const filter = (msg: Message) => {
+            return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId
+                && msg.content == check && msg.embeds.length == 1 && msg.embeds[0].title === 'Card Transfer';
+        };
+
+        const checkFilter = (reaction: MessageReaction, user: User) => {
+            return reaction.emoji.name === '☑️' && user.id === this.user.id;
+        };
+
+        await this.interaction.channel!.send(`t!give <@${this.user.id}> ${cardCode}`);
+
+        const message = await this.getMessage(filter);
+        if (message === undefined) return;
 
         try {
             await message.awaitReactions({filter: checkFilter, max: 1, time: 30000, errors: ['time']});
@@ -50,6 +59,47 @@ export default class Trader {
         await message.react('✅');
 
         await DB.claimCard(this.user.id, user.cards.length);
+    }
+
+    public async use(): Promise<Queue | void> {
+        await this.interaction.deferReply();
+
+        const check = `<@${this.user.id}> → <@${config.botId}>`;
+        const filter = (msg: Message) => {
+            return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId
+                && msg.embeds.length == 1 && msg.embeds[0].title === 'Card Transfer' && msg.embeds[0].description!.includes(check);
+        };
+
+        const checkFilter = (reaction: MessageReaction, user: User) => {
+            return reaction.emoji.name === '☑️' && user.id === this.user.id;
+        };
+
+        const message = await this.getMessage(filter);
+        if (message === undefined) return;
+
+        try {
+            await message.awaitReactions({filter: checkFilter, max: 1, time: 30000, errors: ['time']});
+        } catch (e) {
+            return;
+        }
+
+        await delay(2);
+        await message.react('✅');
+
+        const content = message.embeds[0].description!.split('\n\n')[1];
+        const splitContent = content.split(' · ');
+
+        return {
+            id: NaN,
+            owner_id: this.user.id,
+            card_code: splitContent[0].slice(1, -1),
+            card_details: splitContent.join(' · '),
+            image_url: message.embeds[0].image!.url,
+            duration: null,
+            currency_id: NaN,
+            start_price: NaN,
+            market: false
+        };
     }
 
     public async buy(): Promise<void> {
@@ -105,34 +155,5 @@ export default class Trader {
         } catch (e) {
             return;
         }
-    }
-
-    public async use(): Promise<Queue | void> {
-        await this.interaction.deferReply();
-
-        const filter = (msg: Message) => {
-            return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId;
-        };
-
-        let collected: Collection<string, Message>;
-        try {
-            collected = await this.interaction.channel!.awaitMessages({filter, max: 1, time: 30000, errors: ['time']});
-        } catch (e) {
-            return;
-        }
-
-        // console.log(collected);
-
-        return {
-            id: NaN,
-            owner_id: this.user.id,
-            card_code: Buffer.from(Math.random().toString()).toString("base64").substring(10, 5),
-            card_details: 'bunch of random garble',
-            image_url: collected.first()?.embeds[0].image?.url!,
-            duration: null,
-            currency_id: NaN,
-            start_price: NaN,
-            market: false
-        };
     }
 }
