@@ -13,7 +13,7 @@ export const pool = new Pool({
     port: 5432,
 });
 
-class DB {
+export default class DB {
 
     private static async fetchVal(query: string, values?: Array<any>, conn: any = pool): Promise<any> {
         const {rows: [value]} = await conn.query({
@@ -141,7 +141,7 @@ class DB {
     }
 
     public static async getMarketCard(id: number): Promise<Market> {
-            return await this.fetchRow('SELECT * FROM market WHERE id = $1', [id]);
+        return await this.fetchRow('SELECT * FROM market WHERE id = $1', [id]);
     }
 
     public static async purchaseCard(card: Market, userId: string): Promise<void> {
@@ -194,6 +194,18 @@ class DB {
         await pool.query('UPDATE users SET cards = cards[1:$1] WHERE user_id = $2', [index, userId]);
     }
 
-}
+    public static async addToInv(userId: string, itemId: number, amount: number) {
+        await pool.query(
+            'INSERT INTO inventory(user_id, item_id, amount) VALUES($1, $2, $3) ' +
+            'ON CONFLICT(user_id, item_id) DO UPDATE ' +
+            'SET amount = inventory.amount + EXCLUDED.amount', [userId, itemId, amount])
+    }
 
-export default DB;
+    public static async multipleAddToInv(userId: string, itemIds: Array<number>, amounts: Array<number>) {
+        await pool.query(
+            'INSERT INTO inventory(user_id, item_id, quantity) VALUES($1, unnest($2::int[]), unnest($3::int[])) ' +
+            'ON CONFLICT(user_id, item_id) DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity',
+            [userId, itemIds, amounts])
+    }
+
+}

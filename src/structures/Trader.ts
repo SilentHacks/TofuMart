@@ -1,10 +1,32 @@
-import {CommandInteraction, Message, MessageReaction, User} from "discord.js";
+import {CommandInteraction, Message, MessageReaction, TextBasedChannel, User} from "discord.js";
 import getConfig from "../utils/config";
 import {Queue} from "../db/tables";
 import {delay} from "../utils/helpers";
 import DB from "../db";
 
 const config = getConfig();
+
+
+const waitForColor = async (channel: TextBasedChannel, msgId: string,
+                            waitFor: number = 10, compareTo: string = '#00ff00'): Promise<boolean> => {
+    const endTime = new Date().getTime() + (1000 * waitFor);
+    let msg: Message;
+    while (new Date().getTime() < endTime) {
+        try {
+            msg = await channel.messages.fetch(msgId);
+        } catch (e) {
+            return false;
+        }
+
+        if (msg.embeds[0].hexColor?.toLowerCase() === compareTo) {
+            return true;
+        }
+
+        await delay(1);
+    }
+
+    return false;
+}
 
 export default class Trader {
     private user: User;
@@ -17,7 +39,12 @@ export default class Trader {
         let message: Message;
 
         try {
-            const collected = await this.interaction.channel!.awaitMessages({filter, max: 1, time: 10000, errors: ['time']});
+            const collected = await this.interaction.channel!.awaitMessages({
+                filter,
+                max: 1,
+                time: 10000,
+                errors: ['time']
+            });
             message = collected.first()!;
         } catch (e) {
             await this.interaction.editReply({content: 'The `give` message could not be found.'});
@@ -123,7 +150,12 @@ export default class Trader {
         await this.interaction.reply({content: `t!mt <@${this.user.id}>`});
 
         try {
-            const collected = await this.interaction.channel!.awaitMessages({filter: startFilter, max: 1, time: 30000, errors: ['time']});
+            const collected = await this.interaction.channel!.awaitMessages({
+                filter: startFilter,
+                max: 1,
+                time: 30000,
+                errors: ['time']
+            });
             tradeMessage = collected.first()!;
         } catch (e) {
             return;
@@ -154,6 +186,19 @@ export default class Trader {
             await tradeMessage.awaitReactions({filter: lockFilter, max: 1, time: 30000, errors: ['time']});
         } catch (e) {
             return;
+        }
+
+        // Verify the content
+        const content = tradeMessage.embeds[0].fields[1].value;
+
+        // Wait 2s and then add check reaction
+        await delay(2);
+        await tradeMessage.react('✅');
+
+        // Wait for it to go green
+        if (await waitForColor(this.interaction.channel!, tradeMessage.id)) {
+            // Add the currencies
+            await DB.addToInv(this.user.id, 1, 1);
         }
     }
 }

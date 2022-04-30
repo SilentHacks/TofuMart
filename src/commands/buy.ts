@@ -27,40 +27,32 @@ const checkFunc = (market: Market, userId: string): () => Promise<boolean> => {
 }
 
 
-const marketBuy = async (interaction: CommandInteraction, slot: number) => {
-    const card = await DB.getMarketCard(slot);
-    if (card == null) return await interaction.reply({content: `There is no card in market \`slot ${slot}\`.`, ephemeral: true});
-
-    const embed = buyEmbed(card, interaction.user.id);
-    const passDesc = "You have successfully purchased that card.";
-    const failDesc = "You do not have enough to purchase that card.";
-    const cancelDesc = "Your purchase was canceled.";
-
-    if (await new Confirmation(interaction, checkFunc(card, interaction.user.id), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
-        await DB.purchaseCard(card, interaction.user.id);
-    }
-
-}
-
-
 export default class BuyCommand extends SlashCommand {
     constructor() {
-        super("buy", "Convert Tofu currency to TofuMart items.");
+        super("buy", "Buy cards from the market.");
     }
 
     async exec(interaction: CommandInteraction) {
-        const slot = interaction.options.getInteger('slot');
+        const slot = interaction.options.getInteger('slot', true);
 
-        if (slot !== null) return await marketBuy(interaction, slot);
+        const card = await DB.getMarketCard(slot);
+        if (card == null) return await interaction.reply({content: `There is no card in market \`slot ${slot}\`.`, ephemeral: true});
 
-        await (new Trader(interaction)).buy();
+        const embed = buyEmbed(card, interaction.user.id);
+        const passDesc = "You have successfully purchased that card.";
+        const failDesc = "You do not have enough to purchase that card.";
+        const cancelDesc = "Your purchase was canceled.";
+
+        if (await new Confirmation(interaction, checkFunc(card, interaction.user.id), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
+            await DB.purchaseCard(card, interaction.user.id);
+        }
     }
 
     build(client: Client): SlashCommandBuilder | RESTPostAPIApplicationCommandsJSONBody {
         return new SlashCommandBuilder()
             .setName(this.name)
             .setDescription(this.description)
-            .addIntegerOption(integer => integer.setName('slot').setDescription('Market slot number').setRequired(false).setMinValue(1).setMaxValue(config.numMarket))
+            .addIntegerOption(integer => integer.setName('slot').setDescription('Market slot number').setRequired(true).setMinValue(1).setMaxValue(config.numMarket))
             .toJSON();
     }
 }
