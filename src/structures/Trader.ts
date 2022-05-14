@@ -1,10 +1,18 @@
 import {CommandInteraction, Message, MessageReaction, TextBasedChannel, User} from "discord.js";
 import getConfig from "../utils/config";
 import {Queue} from "../db/tables";
-import {delay} from "../utils/helpers";
+import {CurrencyId, delay} from "../utils/helpers";
 import DB from "../db";
+import {toNumber} from "lodash";
 
 const config = getConfig();
+
+
+const buyRegexes = {
+    [`${CurrencyId.Opals}`]: /```(\d+) \bopals?\b```/i,
+    [`$CurrencyId.Clovers}`]: /```(\d+) \bclovers?\b```/i,
+    [`${CurrencyId.Gold}`]: /```(\d+) \bgolds?\b```/i
+}
 
 
 const waitForColor = async (channel: TextBasedChannel, msgId: string,
@@ -191,6 +199,15 @@ export default class Trader {
         // Verify the content
         const content = tradeMessage.embeds[0].fields[1].value;
 
+        const currencyName = toNumber(this.interaction.options.getString('currency', true));
+
+        let amount;
+        if ((amount = content.match(buyRegexes[currencyName])) === null) {
+            await tradeMessage.react('❌');
+            await this.interaction.followUp(`<@${this.user.id}>, please only add \`${CurrencyId[toNumber(currencyName)]}\`.`);
+            return;
+        }
+
         // Wait 2s and then add check reaction
         await delay(2);
         await tradeMessage.react('✅');
@@ -198,7 +215,7 @@ export default class Trader {
         // Wait for it to go green
         if (await waitForColor(this.interaction.channel!, tradeMessage.id)) {
             // Add the currencies
-            await DB.addToInv(this.user.id, 1, 1);
+            await DB.addToInv(this.user.id, toNumber(currencyName), toNumber(amount[1]));
         }
     }
 }
