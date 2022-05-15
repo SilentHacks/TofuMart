@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import getConfig from './config';
 import {Auctions, Inventory, Market, Queue} from "../db/tables";
-import {currencyEmotes, CurrencyId} from "./helpers";
+import {currencyEmotes, CurrencyId, currencyNames, title} from "./helpers";
 
 const config = getConfig();
 
@@ -10,17 +10,16 @@ export const errorEmbed = (title = "", description = "") =>
     new Discord.MessageEmbed({...config.embeds.fail, title, description})
 
 const makeAuctionDesc = (auction: Auctions) => {
-    const char = auction.quick ? "a" : auction.id;
-    const currency = CurrencyId[auction.currency_id];
+    const currency = title(CurrencyId[auction.currency_id]);
     const emote = currencyEmotes[auction.currency_id];
     const unixTime = Math.floor(auction.end_time.getTime() / 1000);
     const endTime = new Date() > auction.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
 
-    return `${emote} **${char}** · \`${auction.current_bid} ${currency}\` by <@${auction.current_bidder}> - ${endTime}\n`;
+    return `${emote} **${auction.id}** · \`${auction.current_bid} ${currency}\` by <@${auction.current_bidder}> - ${endTime}\n`;
 }
 
 const makeMarketDesc = (market: Market) => {
-    const currency = CurrencyId[market.currency_id];
+    const currency = title(CurrencyId[market.currency_id]);
     const emote = currencyEmotes[market.currency_id];
     const unixTime = Math.floor(market.end_time.getTime() / 1000);
     const endTime = new Date() > market.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
@@ -76,7 +75,7 @@ export const auctionEmbed = (auction: Auctions) => {
 export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) => {
     const description = `<@${userId}>, would you like to place a bid?\n
     Card: ${auction.card_details}
-    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${CurrencyId[auction.currency_id]}\`\n\n`;
+    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${title(CurrencyId[auction.currency_id])}\`\n\n`;
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
@@ -91,7 +90,7 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
 export const buyEmbed = (card: Market, userId: string) => {
     const description = `<@${userId}>, would you like to buy this card?\n
     Card: ${card.card_details}
-    Price: ${currencyEmotes[card.currency_id]} \`${card.price} ${CurrencyId[card.currency_id]}\`\n\n`;
+    Price: ${currencyEmotes[card.currency_id]} \`${card.price} ${title(CurrencyId[card.currency_id])}\`\n\n`;
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
@@ -108,7 +107,7 @@ export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
     if (userInv.length == 0) description += "This inventory is empty";
     else
         for (let row of userInv) {
-            description += `${currencyEmotes[row.item_id]} · **${row.amount}** · \`${CurrencyId[row.item_id]}\`\n`
+            description += `${currencyEmotes[row.item_id]} · **${row.amount}** · \`${title(currencyNames[row.item_id])}\`\n`
         }
 
     return new Discord.MessageEmbed({
