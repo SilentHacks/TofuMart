@@ -82,7 +82,7 @@ export default class Trader {
     }
 
     private async cancelTrade(tradeMessage: Message, error: boolean = false): Promise<void> {
-        const message = error ? `<@${this.user.id}>, the trade has been canceled.` : `<@${this.user.id}>, something went wrong. This trade is being canceled, please try again.`
+        const message = error ? `<@${this.user.id}>, something went wrong. This trade is being canceled, please try again.` : `<@${this.user.id}>, the trade has been canceled.`
         await this.interaction.followUp(message)
         await delay(1.5);
         await tradeMessage.react('❌');
@@ -155,11 +155,11 @@ export default class Trader {
         // Verify the content
         const content = tradeMessage.embeds[0].fields[1].value;
 
-        const currencyName = toNumber(this.interaction.options.getString('currency', true));
+        const currency = toNumber(this.interaction.options.getString('currency', true));
 
         let amountMatch: RegExpMatchArray;
-        if ((amountMatch = content.match(buyRegexes[currencyName])!) === null) {
-            await this.interaction.followUp(`<@${this.user.id}>, please only add \`${CurrencyId[currencyName]}\`.`);
+        if ((amountMatch = content.match(buyRegexes[currency])!) === null) {
+            await this.interaction.followUp(`<@${this.user.id}>, please only add \`${CurrencyId[currency]}\`.`);
             await delay(1.5);
             await tradeMessage.react('❌');
             return;
@@ -171,27 +171,32 @@ export default class Trader {
         // Wait for it to go green
         if (await waitForColor(this.interaction.channel!, tradeMessage.id)) {
             // Add the currencies
-            this.interaction.followUp(`<@${this.user.id}>, exchanged \`${amount}\` **${CurrencyId[currencyName]}** to \`${amount}\` **${currencyNames[currencyName]}**.`)
-                .then(() => DB.addToInv(this.user.id, toNumber(currencyName), toNumber(amount[1]))).then();
+            this.interaction.followUp(`<@${this.user.id}>, exchanged \`${amount}\` **${CurrencyId[currency]}** to \`${amount}\` **${currencyNames[currency]}**.`)
+                .then(() => DB.addToInv(this.user.id, toNumber(currency), toNumber(amount[1]))).then();
         } else await this.cancelTrade(tradeMessage);
     }
 
     public async sell(): Promise<void> {
+        const currency = toNumber(this.interaction.options.getString('currency', true));
+        const amount = this.interaction.options.getInteger('amount', true);
+
+        // Check the user has enough
+        const userInv = await DB.getInvItem(this.user.id, currency);
+        if (userInv.amount < amount) return await this.interaction.reply(`<@${this.user.id}>, you do not have \`${amount}\` **${currencyNames[currency]}**.`);
+
         const tradeMessage = await this.startTrade();
         if (tradeMessage === undefined) return;
 
-        const currencyName = toNumber(this.interaction.options.getString('currency', true));
-        const amount = this.interaction.options.getInteger('amount', true);
-
-        await this.interaction.channel!.send(`${amount} ${currencyName}`)
+        await delay(1.5);
+        await this.interaction.channel!.send(`${amount} ${CurrencyId[currency]}`);
 
         if (!await this.lockTrade(tradeMessage)) return;
 
         // Verify the content
-        const content = tradeMessage.embeds[0].fields[1].value;
+        const content = tradeMessage.embeds[0].fields[0].value;
 
-        const amountMatch = content.match(buyRegexes[currencyName])!;
-        if (amountMatch === null || toNumber(amountMatch[1]) !== amount || tradeMessage.embeds[0].fields[0].value !== "``````") {
+        const amountMatch = content.match(buyRegexes[currency])!;
+        if (amountMatch === null || toNumber(amountMatch[1]) !== amount || tradeMessage.embeds[0].fields[1].value !== "```​```") {
             return await this.cancelTrade(tradeMessage, true);
         }
 
@@ -200,8 +205,8 @@ export default class Trader {
         // Wait for it to go green
         if (await waitForColor(this.interaction.channel!, tradeMessage.id)) {
             // Add the currencies
-            this.interaction.followUp(`<@${this.user.id}>, exchanged \`${amount}\` **${currencyNames[currencyName]}** to \`${amount}\` **${CurrencyId[currencyName]}**.`)
-                .then(() => DB.addToInv(this.user.id, currencyName, -amount)).then();
+            this.interaction.followUp(`<@${this.user.id}>, exchanged \`${amount}\` **${currencyNames[currency]}** to \`${amount}\` **${CurrencyId[currency]}**.`)
+                .then(() => DB.addToInv(this.user.id, currency, -amount)).then();
         } else await this.cancelTrade(tradeMessage);
     }
 
