@@ -81,13 +81,6 @@ export default class Trader {
         return message;
     }
 
-    private async cancelTrade(tradeMessage: Message, error: boolean = false): Promise<void> {
-        const message = error ? `<@${this.user.id}>, something went wrong. This trade is being canceled, please try again.` : `<@${this.user.id}>, the trade has been canceled.`
-        await this.interaction.followUp(message)
-        await delay(1.5);
-        await tradeMessage.react('❌');
-    }
-
     public async claim(): Promise<void> {
         const user = await DB.getUser(this.user.id);
         if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
@@ -106,6 +99,8 @@ export default class Trader {
         const message = await this.getMessage(filter);
         if (message === undefined) return;
 
+        if (!await this.confirmTrade(message)) return;
+
         await DB.claimCard(this.user.id, user.cards.length);
     }
 
@@ -120,6 +115,8 @@ export default class Trader {
 
         const message = await this.getMessage(filter);
         if (message === undefined) return;
+
+        if (!await this.confirmTrade(message)) return;
 
         const content = message.embeds[0].description!.split('\n\n')[1];
         const splitContent = content.split(' · ');
@@ -208,6 +205,15 @@ export default class Trader {
             this.interaction.followUp(`<@${this.user.id}>, exchanged \`${amount}\` **${currencyNames[currency]}** to \`${amount}\` **${CurrencyId[currency]}**.`)
                 .then(() => DB.addToInv(this.user.id, currency, -amount)).then();
         } else await this.cancelTrade(tradeMessage);
+    }
+
+    // Break down functions
+
+    private async cancelTrade(tradeMessage: Message, error: boolean = false): Promise<void> {
+        const message = error ? `<@${this.user.id}>, something went wrong. This trade is being canceled, please try again.` : `<@${this.user.id}>, the trade has been canceled.`
+        await this.interaction.followUp(message)
+        await delay(1.5);
+        await tradeMessage.react('❌');
     }
 
     private async startTrade(): Promise<Message | void> {
