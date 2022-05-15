@@ -2,12 +2,13 @@ import SlashCommand from "../structures/Command";
 import {Client, CommandInteraction} from "discord.js";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
-import Trader from "../structures/Trader";
 import getConfig from "../utils/config";
 import {Market} from "../db/tables";
 import DB from "../db";
-import {buyEmbed} from "../utils/embeds";
+import {buyEmbed, buyKeySlotEmbed} from "../utils/embeds";
 import Confirmation from "../structures/Confirmation";
+import {CurrencyId, currencyNames} from "../utils/helpers";
+import {toNumber, toString} from "lodash";
 
 const config = getConfig();
 
@@ -27,12 +28,20 @@ const checkFunc = (market: Market, userId: string): () => Promise<boolean> => {
 }
 
 
+const keySlotCheckFunc = (userId: string, currency: number, price: number): () => Promise<boolean> => {
+    return async (): Promise<boolean> => {
+        const userInv = await DB.getInvItem(userId, currency);
+        return userInv.amount >= price;
+    }
+}
+
+
 export default class BuyCommand extends SlashCommand {
     constructor() {
-        super("buy", "Buy cards from the market.");
+        super("buy", "Buy items from TofuMart.");
     }
 
-    async exec(interaction: CommandInteraction) {
+    async buyCard(interaction: CommandInteraction) {
         const slot = interaction.options.getInteger('slot', true);
 
         const card = await DB.getMarketCard(slot);
@@ -48,11 +57,72 @@ export default class BuyCommand extends SlashCommand {
         }
     }
 
+    async buyKeySlot(interaction: CommandInteraction) {
+        const type = interaction.options.getSubcommand(true) === 'key' ? CurrencyId.Keys : CurrencyId.Slots;
+        const shop = await DB.getShop(type);
+
+        const currency = toNumber(interaction.options.getString('currency', true));
+        const amount = interaction.options.getInteger('amount') ?? 1;
+        const price = shop.price[toString(currency)] * amount;
+
+        const userInv = await DB.getInvItem(interaction.user.id, currency);
+        if (userInv.amount < price) return await interaction.reply(`<@${interaction.user.id}>, you do not have \`${price}\` **${currencyNames[currency]}**`);
+
+        const embed = buyKeySlotEmbed(interaction.user.id, amount, interaction.options.getSubcommand(true), currency, price);
+        const passDesc = "The purchase was successful.";
+        const failDesc = "You do not have enough to make that purchase.";
+        const cancelDesc = "Your purchase was canceled.";
+
+        if (await new Confirmation(interaction, keySlotCheckFunc(interaction.user.id, currency, price), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
+            await DB.purchaseKeySlot(interaction.user.id, amount, currency, shop.id, price);
+        }
+
+    }
+
+    async exec(interaction: CommandInteraction) {
+        switch (interaction.options.getSubcommand(true)) {
+            case 'market':
+                await this.buyCard(interaction); break;
+            case 'key':
+            case 'slot':
+                await this.buyKeySlot(interaction); break;
+        }
+    }
+
     build(client: Client): SlashCommandBuilder | RESTPostAPIApplicationCommandsJSONBody {
         return new SlashCommandBuilder()
             .setName(this.name)
             .setDescription(this.description)
-            .addIntegerOption(integer => integer.setName('slot').setDescription('Market slot number').setRequired(true).setMinValue(1).setMaxValue(config.numMarket))
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('card')
+                    .setDescription('Buy cards from the market')
+                    .addIntegerOption(integer => integer.setName('slot').setDescription('Market slot number').setRequired(true).setMinValue(1).setMaxValue(config.numMarket)))
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('key')
+                    .setDescription('Buy a key to list cards in the auctions')
+                    .addStringOption(option =>
+                        option.setName('currency')
+                            .setDescription('The currency to use to make the purchase')
+                            .setRequired(true)
+                            .addChoice('Tokens', `${CurrencyId.Opals}`)
+                            .addChoice('Cookies', `${CurrencyId.Gold}`)
+                            .addChoice('Bricks', `${CurrencyId.Clovers}`))
+                    .addIntegerOption(integer => integer.setName('amount').setDescription('The number of keys to buy').setRequired(false).setMinValue(1).setMaxValue(100)))
+
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('slot')
+                    .setDescription('Buy a slot to list cards in the market')
+                    .addStringOption(option =>
+                        option.setName('currency')
+                            .setDescription('The currency to use to make the purchase')
+                            .setRequired(true)
+                            .addChoice('Tokens', `${CurrencyId.Opals}`)
+                            .addChoice('Cookies', `${CurrencyId.Gold}`)
+                            .addChoice('Bricks', `${CurrencyId.Clovers}`))
+                    .addIntegerOption(integer => integer.setName('amount').setDescription('The number of slots to buy').setRequired(false).setMinValue(1).setMaxValue(100)))
             .toJSON();
     }
 }

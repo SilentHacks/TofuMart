@@ -1,4 +1,4 @@
-import {Auctions, Inventory, Market, Queue, Users} from "./tables";
+import {Auctions, Inventory, Market, Queue, Shop, Users} from "./tables";
 import moment from "moment";
 import getConfig from "../utils/config";
 
@@ -165,6 +165,24 @@ export default class DB {
         }
     }
 
+    public static async purchaseKeySlot(userId: string, amount: number, currencyId: number, itemId: number, price: number): Promise<void> {
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [price, currencyId, userId]);
+            await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [amount, itemId, userId]);
+
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+    }
+
     public static async refreshMarket(): Promise<void> {
         const client = await pool.connect();
         const nextRefresh = moment(new Date()).add(config.marketDuration, 'm').toDate();
@@ -194,18 +212,22 @@ export default class DB {
         await pool.query('UPDATE users SET cards = cards[1:$1] WHERE user_id = $2', [index, userId]);
     }
 
-    public static async addToInv(userId: string, itemId: number, amount: number) {
+    public static async addToInv(userId: string, itemId: number, amount: number): Promise<void> {
         await pool.query(
             'INSERT INTO inventory(user_id, item_id, amount) VALUES($1, $2, $3) ' +
             'ON CONFLICT(user_id, item_id) DO UPDATE ' +
-            'SET amount = inventory.amount + EXCLUDED.amount', [userId, itemId, amount])
+            'SET amount = inventory.amount + EXCLUDED.amount', [userId, itemId, amount]);
     }
 
-    public static async multipleAddToInv(userId: string, itemIds: Array<number>, amounts: Array<number>) {
+    public static async multipleAddToInv(userId: string, itemIds: Array<number>, amounts: Array<number>): Promise<void> {
         await pool.query(
             'INSERT INTO inventory(user_id, item_id, quantity) VALUES($1, unnest($2::int[]), unnest($3::int[])) ' +
             'ON CONFLICT(user_id, item_id) DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity',
-            [userId, itemIds, amounts])
+            [userId, itemIds, amounts]);
+    }
+
+    public static async getShop(shopId: number): Promise<Shop> {
+        return await this.fetchRow('SELECT * FROM shop WHERE id = $1', [shopId]);
     }
 
 }

@@ -5,21 +5,24 @@ export enum CurrencyId {
     Opals = 0,
     Gold,
     Clovers,
-    Keys
+    Keys,
+    Slots
 }
 
 export const currencyEmotes: Record<number, string> = {
     [CurrencyId.Opals]: ":fish_cake:",
     [CurrencyId.Gold]: ":cookie:",
     [CurrencyId.Clovers]: ":bricks:",
-    [CurrencyId.Keys]: ":key:"
+    [CurrencyId.Keys]: ":key:",
+    [CurrencyId.Slots]: ":bank:"
 }
 
 export const currencyNames: Record<number, string> = {
     [CurrencyId.Opals]: "Tokens",
     [CurrencyId.Gold]: "Cookies",
     [CurrencyId.Clovers]: "Bricks",
-    [CurrencyId.Keys]: "Keys"
+    [CurrencyId.Keys]: "Keys",
+    [CurrencyId.Slots]: "Slots"
 }
 
 export const sendMessage = async (user: User | string, message: string) => {

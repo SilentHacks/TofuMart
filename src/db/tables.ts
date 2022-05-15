@@ -1,3 +1,5 @@
+import {CurrencyId} from "../utils/helpers";
+
 export interface Auctions {
     id: number,
     card_code: string,
@@ -45,4 +47,11 @@ export interface Market {
     card_details: string,
     owner_id: string,
     sold: boolean
+}
+
+export interface Shop {
+    id: number,
+    price: { [key: string]: number },
+    fee: number,
+    cap: { [key: string]: number }
 }

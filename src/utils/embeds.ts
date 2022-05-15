@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import getConfig from './config';
 import {Auctions, Inventory, Market, Queue} from "../db/tables";
-import {currencyEmotes, CurrencyId, currencyNames} from "./helpers";
+import {currencyEmotes, CurrencyId, currencyNames, title} from "./helpers";
 
 const config = getConfig();
 
@@ -99,6 +99,17 @@ export const buyEmbed = (card: Market, userId: string) => {
         thumbnail: {
             url: card.image_url
         }
+    })
+}
+
+export const buyKeySlotEmbed = (userId: string, amount: number, type: string, currency: number, price: number) => {
+    const description = `<@${userId}>, would you like to buy \`${amount}\` **${title(type)}${amount > 1 ? 's' : ''}**?\n
+    Price: ${currencyEmotes[currency]} \`${price} ${currencyNames[currency]}\`\n\n`;
+
+    return new Discord.MessageEmbed({
+        ...config.embeds.primary,
+        title: `Purchase ${title(type)}`,
+        description: description
     })
 }
 
