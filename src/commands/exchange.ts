@@ -12,10 +12,10 @@ export default class ExchangeCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
-        if (interaction.options.getSubcommand() === 'buy') {
-            await (new Trader(interaction)).buy();
-        }
+        const command = interaction.options.getSubcommand() as keyof Trader;
+        await new Trader(interaction)[command]();
     }
+
 
     build(client: Client): SlashCommandBuilder | RESTPostAPIApplicationCommandsJSONBody {
         return new SlashCommandBuilder()

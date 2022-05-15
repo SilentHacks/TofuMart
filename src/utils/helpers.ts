@@ -16,10 +16,10 @@ export const currencyEmotes: Record<number, string> = {
 }
 
 export const currencyNames: Record<number, string> = {
-    [CurrencyId.Opals]: "tokens",
-    [CurrencyId.Gold]: "cookies",
-    [CurrencyId.Clovers]: "bricks",
-    [CurrencyId.Keys]: "keys"
+    [CurrencyId.Opals]: "Tokens",
+    [CurrencyId.Gold]: "Cookies",
+    [CurrencyId.Clovers]: "Bricks",
+    [CurrencyId.Keys]: "Keys"
 }
 
 export const sendMessage = async (user: User | string, message: string) => {
