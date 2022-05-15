@@ -43,7 +43,7 @@ export default class Trader {
         this.user = interaction.user;
     }
 
-    private async getMessage(filter: (msg: Message) => boolean): Promise<Message | undefined> {
+    private async getMessage(filter: (msg: Message) => boolean): Promise<Message | void> {
         const checkFilter = (reaction: MessageReaction, user: User) => {
             return (reaction.emoji.name === '☑️' || reaction.emoji.name === '❌') && user.id === this.user.id;
         };
@@ -63,11 +63,11 @@ export default class Trader {
             return;
         }
 
-        if (message === undefined) return message;
+        if (message === undefined) return;
 
         try {
             const collected = await message.awaitReactions({filter: checkFilter, max: 1, time: 30000, errors: ['time']});
-            if (collected.first()!.emoji.name === '❌') await this.cancelTrade(message);
+            if (collected.first()!.emoji.name === '❌') return await this.cancelTrade(message);
         } catch (e) {
             return;
         }
@@ -76,10 +76,7 @@ export default class Trader {
         message.react('✅').then();
 
         // Wait for it to go green
-        if (!await waitForColor(this.interaction.channel!, message.id)) {
-            await this.cancelTrade(message);
-            return undefined;
-        }
+        if (!await waitForColor(this.interaction.channel!, message.id)) return await this.cancelTrade(message);
 
         return message;
     }
@@ -179,7 +176,7 @@ export default class Trader {
 
         try {
             const collected = await tradeMessage.awaitReactions({filter: checkFilter, max: 1, time: 30000, errors: ['time']});
-            if (collected.first()!.emoji.name === '❌') await this.cancelTrade(tradeMessage);
+            if (collected.first()!.emoji.name === '❌') return await this.cancelTrade(tradeMessage);
         } catch (e) {
             return;
         }
@@ -195,7 +192,7 @@ export default class Trader {
 
         try {
             const collected = await tradeMessage.awaitReactions({filter: lockFilter, max: 1, time: 30000, errors: ['time']});
-            if (collected.first()!.emoji.name === '❌') await this.cancelTrade(tradeMessage);
+            if (collected.first()!.emoji.name === '❌') return await this.cancelTrade(tradeMessage);
         } catch (e) {
             return;
         }
