@@ -1,13 +1,13 @@
+import {Message} from "discord.js";
+
 export default class PrefixCommand {
     name: string;
-    description: string;
 
-    constructor(name: string, description: string) {
+    constructor(name: string) {
         this.name = name;
-        this.description = description;
     }
 
-    exec(args?: string[]) {
+    exec(message: Message, args?: string[]) {
         throw new Error("Method not implemented.");
     }
 }

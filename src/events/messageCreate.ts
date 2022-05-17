@@ -10,7 +10,7 @@ const config = getConfig();
 export default class PrefixCommandHandler extends Event {
     constructor() {
         super('PrefixCommand', 'messageCreate');
-    };
+    }
 
     async exec(message: Message) {
         if (
@@ -31,7 +31,7 @@ export default class PrefixCommandHandler extends Event {
         if (!command) return;
 
         try {
-            command.exec(args);
+            command.exec(message, args);
         } catch (error) {
             const cmdLogger = createLogger(command.name);
             cmdLogger.error(`Failed to run command ${command.name}:`, error);
