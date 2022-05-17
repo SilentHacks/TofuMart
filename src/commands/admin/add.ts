@@ -53,7 +53,7 @@ export default class AddCommand extends PrefixCommand {
                 itemId = CurrencyId.Slots; break;
 
             default:
-                await message.reply(`<@${message.author.id}>, the item **${itemName}** could not be found.`)
+                await message.reply(`The item **${itemName}** could not be found.`)
                 return;
         }
 

@@ -230,4 +230,11 @@ export default class DB {
         return await this.fetchRow('SELECT * FROM shop WHERE id = $1', [shopId]);
     }
 
+    public static async addTime(amount: number, unit: string, market: boolean, auctionId?: number) {
+        const timeToAdd = `'${amount} ${unit}'`;
+        const table = market ? 'market' : 'auctions'
+        if (auctionId === undefined) await pool.query(`UPDATE ${table} SET end_time = end_time + INTERVAL ${timeToAdd}`);
+        else await pool.query(`UPDATE ${table} SET end_time = end_time + INTERVAL ${timeToAdd} WHERE id = $1`, [auctionId]);
+    }
+
 }
