@@ -17,6 +17,11 @@ export default class AddCommand extends PrefixCommand {
 
         if (amount === 0) return;
 
+        let userId = message.author.id;
+        if (+args[args.length - 1] === +args[args.length - 1]) {
+            userId = args.pop()!;
+        }
+
         const itemName = args.join(' ').toLowerCase();
 
         let itemId: number;
@@ -48,11 +53,11 @@ export default class AddCommand extends PrefixCommand {
                 itemId = CurrencyId.Slots; break;
 
             default:
-                await message.reply(`<@${message.author.id}>, **${itemName}** could not be found.`)
+                await message.reply(`<@${message.author.id}>, the item **${itemName}** could not be found.`)
                 return;
         }
 
-        await DB.addToInv(message.author.id, itemId, amount);
-        await message.reply(`<@${message.author.id}>, added \`${amount}\` **${currencyNames[itemId]}**.`)
+        await DB.addToInv(userId, itemId, amount);
+        await message.reply(`Added \`${amount}\` **${currencyNames[itemId]}** to <@${userId}>.`)
     }
 }
