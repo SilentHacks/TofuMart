@@ -45,23 +45,26 @@ const eventsLoading = (async function loadEvents(dir = path.resolve(__dirname, "
 
 discordLogger.info("Loading all commands...");
 import Command from './structures/Command';
+import PrefixCommand from "./structures/PrefixCommand";
 
 export const commands = new Discord.Collection<string, Command>();
-const cmdsLoading = (async function loadCommands(dir = path.resolve(__dirname, "./commands")) {
+export const adminCommands = new Discord.Collection<string, PrefixCommand>();
+const cmdsLoading = (async function loadCommands(dir = path.resolve(__dirname, "./commands"), admin= false) {
     const files = fs.readdirSync(dir);
     for (const file of files) {
         const filePath = `${dir}/${file}`
         const fileDesc = fs.statSync(filePath);
 
         if (fileDesc.isDirectory()) {
-            await loadCommands(filePath);
+            await loadCommands(filePath, true);
             continue;
         }
 
         const loadedCommand = await import(filePath);
-        const command: Command = new loadedCommand.default();
+        const command: Command | PrefixCommand = new loadedCommand.default();
 
-        commands.set(command.name, command);
+        if (admin) adminCommands.set(command.name, command as PrefixCommand);
+        else commands.set(command.name, command as Command);
 
         discordLogger.info(`Loaded command ${command.name} from ${file}`);
     }

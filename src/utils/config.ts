@@ -7,6 +7,7 @@ import path from 'path';
 const logger = createLogger('config');
 
 export type DiscordBotConfig = {
+    prefix: string,
     token: string,
     devGuild: string,
     botId: string,
@@ -14,6 +15,7 @@ export type DiscordBotConfig = {
     numMarket: number,
     auctionDuration: number,
     marketDuration: number,
+    admins: string[],
     embeds: {
         primary: APIEmbed
         fail: APIEmbed
