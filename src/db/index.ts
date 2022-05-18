@@ -1,6 +1,7 @@
 import {Auctions, Inventory, Market, Queue, Shop, Users} from "./tables";
 import moment from "moment";
 import getConfig from "../utils/config";
+import {floor} from "lodash";
 
 const config = getConfig();
 const {Pool} = require('pg');
@@ -230,11 +231,29 @@ export default class DB {
         return await this.fetchRow('SELECT * FROM shop WHERE id = $1', [shopId]);
     }
 
-    public static async addTime(amount: number, unit: string, market: boolean, auctionId?: number) {
+    public static async addTime(amount: number, unit: string, market: boolean, auctionId?: number): Promise<void> {
         const timeToAdd = `'${amount} ${unit}'`;
         const table = market ? 'market' : 'auctions'
         if (auctionId === undefined) await pool.query(`UPDATE ${table} SET end_time = end_time + INTERVAL ${timeToAdd}`);
         else await pool.query(`UPDATE ${table} SET end_time = end_time + INTERVAL ${timeToAdd} WHERE id = $1`, [auctionId]);
+    }
+
+    public static async logShutdown(): Promise<void> {
+        await pool.query('UPDATE bot_info SET shutdown_time = CURRENT_TIMESTAMP WHERE id = 0');
+    }
+
+    public static async addShutdownTime(): Promise<boolean> {
+        const lastShutdown: Date | null = await this.fetchVal('SELECT shutdown_time FROM bot_info WHERE id = 0');
+        if (lastShutdown === null) return false;
+
+        const timeNow = new Date()
+        if (timeNow > lastShutdown) {
+            await pool.query('UPDATE bot_info SET shutdown_time = NULL WHERE id = 0');
+            const minutesDiff = floor((timeNow.getTime() - lastShutdown.getTime()) / 60000);
+            await pool.query(`UPDATE auctions SET end_time = end_time + INTERVAL '${minutesDiff} minutes'`);
+        }
+
+        return true;
     }
 
 }

@@ -1,5 +1,3 @@
-import {CurrencyId} from "../utils/helpers";
-
 export interface Auctions {
     id: number,
     card_code: string,

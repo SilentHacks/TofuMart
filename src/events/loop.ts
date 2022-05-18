@@ -7,6 +7,8 @@ import buildAuction from "../utils/imageBuilder";
 
 
 const auctionLoop = async () => {
+    if (!await DB.addShutdownTime()) return;
+
     const client = await pool.connect();
 
     // Check auction loop
