@@ -4,6 +4,7 @@ import {auctionEmbed, auctionListEmbed} from "../utils/embeds";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
+import {cooldown} from "../utils/decorators";
 
 const {MessageAttachment} = require('discord.js');
 
@@ -12,6 +13,7 @@ export default class AuctionCommand extends SlashCommand {
         super("auction", "View the list of auctions currently being held.");
     }
 
+    @cooldown(10)
     async exec(interaction: CommandInteraction) {
         const slot = interaction.options.getInteger('slot');
 

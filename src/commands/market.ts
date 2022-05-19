@@ -6,6 +6,7 @@ import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
 import {Paginator} from "../structures/Paginator";
 import getConfig from "../utils/config";
+import {cooldown} from "../utils/decorators";
 
 const config = getConfig();
 
@@ -15,6 +16,7 @@ export default class MarketCommand extends SlashCommand {
         super("market", "View the current market.");
     }
 
+    @cooldown(10)
     async exec(interaction: CommandInteraction) {
         const slot = interaction.options.getInteger('slot');
         if (slot !== null) {

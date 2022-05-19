@@ -5,6 +5,7 @@ import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
 import {Paginator} from "../structures/Paginator";
+import {cooldown} from "../utils/decorators";
 
 
 export default class QueueCommand extends SlashCommand {
@@ -12,6 +13,7 @@ export default class QueueCommand extends SlashCommand {
         super("queue", "View the queue of cards for the auctions/market.");
     }
 
+    @cooldown(10)
     async exec(interaction: CommandInteraction) {
         const market = interaction.options.getSubcommand() == 'market';
         const queue = await DB.getQueue(market);
