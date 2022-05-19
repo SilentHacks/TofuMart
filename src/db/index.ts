@@ -185,6 +185,9 @@ export default class DB {
             await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [price, currencyId, userId]);
             await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [amount, itemId, userId]);
 
+            const column = CurrencyId[currencyId].toLowerCase().replace('s', '');
+            await client.query(`UPDATE bot_info SET ${column}_profit = ${column}_profit + $1`, [price]);
+
             await client.query('COMMIT');
         } catch (e) {
             await client.query('ROLLBACK');
