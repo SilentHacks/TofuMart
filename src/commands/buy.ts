@@ -7,8 +7,9 @@ import {Market} from "../db/tables";
 import DB from "../db";
 import {buyEmbed, buyKeySlotEmbed} from "../utils/embeds";
 import Confirmation from "../structures/Confirmation";
-import {CurrencyId, currencyNames} from "../utils/helpers";
+import {commandDisabled, CurrencyId, currencyNames} from "../utils/helpers";
 import {toNumber, toString} from "lodash";
+import {client} from "../index";
 
 const config = getConfig();
 
@@ -80,6 +81,8 @@ export default class BuyCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
+        if (!client.buyEnabled) return await commandDisabled(interaction);
+
         switch (interaction.options.getSubcommand(true)) {
             case 'market':
                 await this.buyCard(interaction); break;

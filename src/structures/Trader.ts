@@ -86,15 +86,13 @@ export default class Trader {
         if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
         const cardCode = user.cards.pop();
 
-        await this.interaction.deferReply();
-
         const check = `<@${this.user.id}>, would you like to accept \`${cardCode}\` from <@${config.botId}>?`;
         const filter = (msg: Message) => {
             return msg.channel.id == this.interaction.channel!.id && msg.author.id == config.tofuId
                 && msg.content == check && msg.embeds.length == 1 && msg.embeds[0].title === 'Card Transfer';
         };
 
-        await this.interaction.channel!.send(`t!give <@${this.user.id}> ${cardCode}`);
+        await this.interaction.reply(`t!give <@${this.user.id}> ${cardCode}`);
 
         const message = await this.getMessage(filter);
         if (message === undefined) return;

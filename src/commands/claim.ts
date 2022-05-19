@@ -3,6 +3,8 @@ import {Client, CommandInteraction} from "discord.js";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import Trader from "../structures/Trader";
+import {client} from "../index";
+import {commandDisabled} from "../utils/helpers";
 
 
 export default class ClaimCommand extends SlashCommand {
@@ -11,6 +13,8 @@ export default class ClaimCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
+        if (!client.claimEnabled) return await commandDisabled(interaction);
+
         await (new Trader(interaction)).claim();
     }
 

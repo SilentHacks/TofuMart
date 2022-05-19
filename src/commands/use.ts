@@ -3,9 +3,10 @@ import {Client, CommandInteraction} from "discord.js";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
-import {CurrencyId} from "../utils/helpers";
+import {commandDisabled, CurrencyId} from "../utils/helpers";
 import Trader from "../structures/Trader";
 import getConfig from "../utils/config";
+import {client} from "../index";
 
 const config = getConfig();
 
@@ -16,6 +17,8 @@ export default class UseCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
+        if (!client.useEnabled) return await commandDisabled(interaction);
+
         const currencyId = parseInt(interaction.options.getString('currency', true));
         let start = interaction.options.getInteger('start bid') ?? 1;
         const market = interaction.options.getSubcommand() == 'slot';

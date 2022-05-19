@@ -1,4 +1,4 @@
-import {User} from "discord.js";
+import {CommandInteraction, User} from "discord.js";
 import {client} from "../index";
 
 export enum CurrencyId {
@@ -32,6 +32,9 @@ export const sendMessage = async (user: User | string, message: string) => {
     } catch {
     }
 }
+
+export const commandDisabled = async (interaction: CommandInteraction) =>
+    await interaction.reply(`<@${interaction.user.id}>, this command has been temporary disabled.`);
 
 export const delay = async (s: number) => new Promise(res => setTimeout(res, 1000 * s));
 

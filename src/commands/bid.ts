@@ -4,10 +4,11 @@ import {bidEmbed} from "../utils/embeds";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import DB from "../db/index"
-import {CurrencyId, sendMessage} from "../utils/helpers";
+import {commandDisabled, CurrencyId, sendMessage} from "../utils/helpers";
 import Confirmation from "../structures/Confirmation";
 import {Auctions} from "../db/tables";
 import moment from "moment";
+import {client} from "../index";
 
 
 const checkFunc = (auction: Auctions, userId: string, bidAmount: number): () => Promise<boolean> => {
@@ -39,6 +40,7 @@ export default class BidCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
+        if (!client.bidEnabled) return await commandDisabled(interaction);
         const slot = interaction.options.getInteger('slot', true);
         const amount = interaction.options.getInteger('amount', true);
 

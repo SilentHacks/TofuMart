@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import CustomClient from "./structures/CustomClient";
 import getConfig from './utils/config';
 import * as dotenv from 'dotenv';
 const nodeCleanup = require('node-cleanup');
@@ -6,7 +7,7 @@ const nodeCleanup = require('node-cleanup');
 dotenv.config();
 const config = getConfig();
 
-export const client = new Discord.Client({
+export const client = new CustomClient({
     intents: [
         'GUILD_MESSAGE_REACTIONS',
         'GUILD_MESSAGES',

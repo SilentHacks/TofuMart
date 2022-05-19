@@ -3,7 +3,8 @@ import {Client, CommandInteraction} from "discord.js";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import Trader from "../structures/Trader";
-import {CurrencyId} from "../utils/helpers";
+import {commandDisabled, CurrencyId} from "../utils/helpers";
+import {client} from "../index";
 
 
 export default class ExchangeCommand extends SlashCommand {
@@ -12,6 +13,8 @@ export default class ExchangeCommand extends SlashCommand {
     }
 
     async exec(interaction: CommandInteraction) {
+        if (!client.exchangeEnabled) return await commandDisabled(interaction);
+
         const command = interaction.options.getSubcommand() as keyof Trader;
         await new Trader(interaction)[command]();
     }
