@@ -56,18 +56,25 @@ export default class DB {
         return await this.fetchRow('SELECT * FROM queue ORDER BY id LIMIT 1', undefined, conn);
     }
 
-    public static async endAuction(auction: Auctions, conn: any = pool): Promise<number> {
+    public static async addProfit(amount: number, currencyId: number, conn: any = pool) {
+        const column = CurrencyId[currencyId].toLowerCase().replace('s', '');
+        await conn.query(`UPDATE bot_info SET ${column}_profit = ${column}_profit + $1`, [amount]);
+    }
+
+    public static async endAuction(auction: Auctions, conn: any = pool) {
         const shop: Shop = await this.fetchRow('SELECT * FROM shop WHERE id = $1', [CurrencyId.Keys]);
         const fee = calcFee(auction, shop);
 
         await conn.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [auction.card_code, auction.current_bidder]);
         await conn.query('UPDATE inventory SET amount = amount + $1 WHERE user_id = $2 AND item_id = $3', [auction.current_bid - fee, auction.owner_id, auction.currency_id]);
 
-        const column = CurrencyId[auction.currency_id].toLowerCase().replace('s', '');
-        await conn.query(`UPDATE bot_info SET ${column}_profit = ${column}_profit + $1`, [fee]);
+        await this.addProfit(fee, auction.currency_id, conn);
         await conn.query('UPDATE auctions SET sent_dm = TRUE WHERE id = $1', [auction.id]);
 
-        return fee;
+        return {
+            fee: fee,
+            shop: shop
+        }
     }
 
     public static async updateAuction(slot: number, nextCard: Queue, conn: any = pool) {
@@ -155,8 +162,10 @@ export default class DB {
         return await this.fetchRow('SELECT * FROM market WHERE id = $1', [id]);
     }
 
-    public static async purchaseCard(card: Market, userId: string): Promise<void> {
+    public static async purchaseCard(card: Market, userId: string) {
         const client = await pool.connect();
+        let fee: number;
+        let shop: Shop;
 
         try {
             await client.query('BEGIN');
@@ -165,7 +174,11 @@ export default class DB {
             await client.query('INSERT INTO users(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING', [userId]);
             await client.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [card.card_code, userId]);
             await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, userId]);
-            await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [card.price, card.currency_id, card.owner_id]);
+
+            shop = await this.fetchRow('SELECT * FROM shop WHERE id = $1', [CurrencyId.Slots]);
+            fee = calcFee(card, shop);
+            await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [card.price - fee, card.currency_id, card.owner_id]);
+            await this.addProfit(fee, card.currency_id, client);
 
             await client.query('COMMIT');
         } catch (e) {
@@ -174,6 +187,11 @@ export default class DB {
         } finally {
             client.release();
         }
+
+        return {
+            fee: fee,
+            shop: shop
+        };
     }
 
     public static async purchaseKeySlot(userId: string, amount: number, currencyId: number, itemId: number, price: number): Promise<void> {
@@ -185,8 +203,7 @@ export default class DB {
             await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [price, currencyId, userId]);
             await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [amount, itemId, userId]);
 
-            const column = CurrencyId[currencyId].toLowerCase().replace('s', '');
-            await client.query(`UPDATE bot_info SET ${column}_profit = ${column}_profit + $1`, [price]);
+            await this.addProfit(price, currencyId, client);
 
             await client.query('COMMIT');
         } catch (e) {

@@ -22,13 +22,14 @@ const auctionLoop = async () => {
             // Give card to winner
             if (auction.current_bidder && !auction.sent_dm) {
                 discordLogger.info(`Ending auction slot ${auction.id} - ${auction.card_code}`);
-                const fee = await DB.endAuction(auction);
+                const {fee, shop} = await DB.endAuction(auction);
                 await sendMessage(auction.current_bidder,  // DM the winner
                     `Congrats, you won auction **Slot ${auction.id}**: ${auction.card_details} for \`${auction.current_bid}\` **${currencyNames[auction.currency_id]}**. Use \`/claim\` to claim it!`
                 );
                 await delay(1);
                 await sendMessage(auction.owner_id,
-                    `Congrats, your card ${auction.card_details} in **Slot ${auction.id}** sold for \`${auction.current_bid - fee}\` **${currencyNames[auction.currency_id]}**.`
+                    `Congrats, your card ${auction.card_details} in **Slot ${auction.id}** of the auctions sold! 
+                    A fee of \`${shop.fee}% = ${fee}\` was applied, giving you \`${auction.current_bid - fee}\` **${currencyNames[auction.currency_id]}**.`
                 );
                 await delay(1);
             }

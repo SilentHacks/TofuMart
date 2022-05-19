@@ -7,7 +7,7 @@ import {Market} from "../db/tables";
 import DB from "../db";
 import {buyEmbed, buyKeySlotEmbed} from "../utils/embeds";
 import Confirmation from "../structures/Confirmation";
-import {commandDisabled, CurrencyId, currencyNames} from "../utils/helpers";
+import {commandDisabled, CurrencyId, currencyNames, sendMessage} from "../utils/helpers";
 import {toNumber, toString} from "lodash";
 import {client} from "../index";
 
@@ -54,7 +54,11 @@ export default class BuyCommand extends SlashCommand {
         const cancelDesc = "Your purchase was canceled.";
 
         if (await new Confirmation(interaction, checkFunc(card, interaction.user.id), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
-            await DB.purchaseCard(card, interaction.user.id);
+            const {fee, shop} = await DB.purchaseCard(card, interaction.user.id);
+            await sendMessage(card.owner_id,
+                `Congrats, your card ${card.card_details} in **Slot ${card.id}** of the market sold! 
+                    A fee of \`${shop.fee}% = ${fee}\` was applied, giving you \`${card.price - fee}\` **${currencyNames[card.currency_id]}**.`
+            );
         }
     }
 
