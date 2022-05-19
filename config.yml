@@ -13,6 +13,8 @@ numMarket: 50
 auctionDuration: 300
 marketDuration: 1500
 
+brokenImage: "https://cdn.discordapp.com/attachments/706398783126110249/976907417294102548/Screenshot_2022-05-19_at_19.00.44.png"
+
 admins:
   - "372825096664121346"
   - "524582997714927636"

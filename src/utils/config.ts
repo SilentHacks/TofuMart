@@ -15,6 +15,7 @@ export type DiscordBotConfig = {
     numMarket: number,
     auctionDuration: number,
     marketDuration: number,
+    brokenImage: string,
     admins: string[],
     embeds: {
         primary: APIEmbed

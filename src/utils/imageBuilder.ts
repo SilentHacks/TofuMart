@@ -3,10 +3,14 @@ import fetch from "node-fetch";
 
 import sharp from "sharp";
 import DB from "../db";
+import getConfig from "./config";
 
 const cardWidth = 300;
 const cardHeight = 450;
 const rowCards = 5;
+
+
+const config = getConfig();
 
 
 export default async function buildAuction() {
@@ -31,7 +35,8 @@ async function buildAuctionList(imageUrls: Array<string>) {
     const ySpacing = cardHeight + heightOffset;
 
     for (let imageUrl of imageUrls) {
-        const image = await fetch(imageUrl);
+        let image = await fetch(imageUrl);
+        if (image.status !== 200) image = await fetch(config.brokenImage);
         const imageBuffer = await image.buffer();
 
         const left = startX + (cardNum % rowCards) * xSpacing;
