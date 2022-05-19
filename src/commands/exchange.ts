@@ -5,6 +5,7 @@ import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import Trader from "../structures/Trader";
 import {commandDisabled, CurrencyId} from "../utils/helpers";
 import {client} from "../index";
+import {maxConcurrency} from "../utils/decorators";
 
 
 export default class ExchangeCommand extends SlashCommand {
@@ -12,6 +13,7 @@ export default class ExchangeCommand extends SlashCommand {
         super("exchange", "Exchange Tofu currency for TofuMart currency.");
     }
 
+    @maxConcurrency
     async exec(interaction: CommandInteraction) {
         if (!client.exchangeEnabled) return await commandDisabled(interaction);
 

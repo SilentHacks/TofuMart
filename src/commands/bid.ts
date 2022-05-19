@@ -9,6 +9,7 @@ import Confirmation from "../structures/Confirmation";
 import {Auctions} from "../db/tables";
 import moment from "moment";
 import {client} from "../index";
+import {maxConcurrency} from "../utils/decorators";
 
 
 const checkFunc = (auction: Auctions, userId: string, bidAmount: number): () => Promise<boolean> => {
@@ -39,6 +40,7 @@ export default class BidCommand extends SlashCommand {
         super("bid", "Bid on a card in the auctions.");
     }
 
+    @maxConcurrency
     async exec(interaction: CommandInteraction) {
         if (!client.bidEnabled) return await commandDisabled(interaction);
         const slot = interaction.options.getInteger('slot', true);

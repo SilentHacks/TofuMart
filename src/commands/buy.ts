@@ -10,6 +10,7 @@ import Confirmation from "../structures/Confirmation";
 import {commandDisabled, CurrencyId, currencyNames, sendMessage} from "../utils/helpers";
 import {toNumber, toString} from "lodash";
 import {client} from "../index";
+import {maxConcurrency} from "../utils/decorators";
 
 const config = getConfig();
 
@@ -84,11 +85,12 @@ export default class BuyCommand extends SlashCommand {
 
     }
 
+    @maxConcurrency
     async exec(interaction: CommandInteraction) {
         if (!client.buyEnabled) return await commandDisabled(interaction);
 
         switch (interaction.options.getSubcommand(true)) {
-            case 'market':
+            case 'card':
                 await this.buyCard(interaction); break;
             case 'key':
             case 'slot':

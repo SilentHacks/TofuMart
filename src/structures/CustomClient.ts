@@ -1,14 +1,15 @@
-import {Client, ClientOptions} from "discord.js";
+import {Client, ClientOptions, Collection} from "discord.js";
 
 export default class CustomClient extends Client {
-    constructor(
-        options: ClientOptions,
-        public exchangeEnabled = true,
-        public buyEnabled = true,
-        public useEnabled = true,
-        public bidEnabled = true,
-        public claimEnabled = true
-        ) {
+    public exchangeEnabled = true;
+    public buyEnabled = true;
+    public useEnabled = true;
+    public bidEnabled = true;
+    public claimEnabled = true;
+
+    public commandCache: {[k: string]: Collection<string, boolean>} = {};
+
+    constructor(options: ClientOptions) {
         super(options);
     }
 }

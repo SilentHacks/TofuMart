@@ -5,6 +5,7 @@ import {RESTPostAPIApplicationCommandsJSONBody} from "discord-api-types";
 import Trader from "../structures/Trader";
 import {client} from "../index";
 import {commandDisabled} from "../utils/helpers";
+import {maxConcurrency} from "../utils/decorators";
 
 
 export default class ClaimCommand extends SlashCommand {
@@ -12,6 +13,7 @@ export default class ClaimCommand extends SlashCommand {
         super("claim", "Claim the most recent card that you purchased/won.");
     }
 
+    @maxConcurrency
     async exec(interaction: CommandInteraction) {
         if (!client.claimEnabled) return await commandDisabled(interaction);
 

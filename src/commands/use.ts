@@ -7,6 +7,7 @@ import {commandDisabled, CurrencyId} from "../utils/helpers";
 import Trader from "../structures/Trader";
 import getConfig from "../utils/config";
 import {client} from "../index";
+import {maxConcurrency} from "../utils/decorators";
 
 const config = getConfig();
 
@@ -16,6 +17,7 @@ export default class UseCommand extends SlashCommand {
         super("use", "List your card in the auctions/market.");
     }
 
+    @maxConcurrency
     async exec(interaction: CommandInteraction) {
         if (!client.useEnabled) return await commandDisabled(interaction);
 
