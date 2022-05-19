@@ -2,6 +2,7 @@ import {Auctions, Inventory, Market, Queue, Shop, Users} from "./tables";
 import moment from "moment";
 import getConfig from "../utils/config";
 import {floor} from "lodash";
+import {calcFee, CurrencyId} from "../utils/helpers";
 
 const config = getConfig();
 const {Pool} = require('pg');
@@ -55,9 +56,18 @@ export default class DB {
         return await this.fetchRow('SELECT * FROM queue ORDER BY id LIMIT 1', undefined, conn);
     }
 
-    public static async endAuction(auction: Auctions, conn: any = pool) {
+    public static async endAuction(auction: Auctions, conn: any = pool): Promise<number> {
+        const shop: Shop = await this.fetchRow('SELECT * FROM shop WHERE id = $1', [CurrencyId.Keys]);
+        const fee = calcFee(auction, shop);
+
         await conn.query('UPDATE users SET cards = array_append(cards, $1) WHERE user_id = $2', [auction.card_code, auction.current_bidder]);
+        await conn.query('UPDATE inventory SET amount = amount + $1 WHERE user_id = $2 AND item_id = $3', [auction.current_bid - fee, auction.owner_id, auction.currency_id]);
+
+        const column = CurrencyId[auction.currency_id].toLowerCase().replace('s', '');
+        await conn.query(`UPDATE bot_info SET ${column}_profit = ${column}_profit + $1`, [fee]);
         await conn.query('UPDATE auctions SET sent_dm = TRUE WHERE id = $1', [auction.id]);
+
+        return fee;
     }
 
     public static async updateAuction(slot: number, nextCard: Queue, conn: any = pool) {

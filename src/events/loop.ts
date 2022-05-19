@@ -2,7 +2,7 @@ import {client} from '..';
 import Event from '../structures/Event';
 import {discordLogger} from '../utils/logger';
 import DB, {pool} from "../db";
-import {delay, sendMessage} from "../utils/helpers";
+import {currencyNames, delay, sendMessage} from "../utils/helpers";
 import buildAuction from "../utils/imageBuilder";
 
 
@@ -22,9 +22,15 @@ const auctionLoop = async () => {
             // Give card to winner
             if (auction.current_bidder && !auction.sent_dm) {
                 discordLogger.info(`Ending auction slot ${auction.id} - ${auction.card_code}`);
-                await DB.endAuction(auction);
-                await sendMessage(auction.current_bidder, 'Congrats you won the auction :smile:')
-                await new Promise(r => setTimeout(r, 3000)); // Sleep 3 seconds
+                const fee = await DB.endAuction(auction);
+                await sendMessage(auction.current_bidder,  // DM the winner
+                    `Congrats, you won auction **Slot ${auction.id}**: ${auction.card_details} for \`${auction.current_bid}\` **${currencyNames[auction.currency_id]}**. Use \`/claim\` to claim it!`
+                );
+                await delay(1);
+                await sendMessage(auction.owner_id,
+                    `Congrats, your card ${auction.card_details} in **Slot ${auction.id}** sold for \`${auction.current_bid - fee}\` **${currencyNames[auction.currency_id]}**.`
+                );
+                await delay(1);
             }
 
             // Pop next card from queue into current auctions
@@ -33,6 +39,9 @@ const auctionLoop = async () => {
             if (nextCard) {
                 discordLogger.info(`Replacing auction with ${nextCard.card_code} from queue`);
                 await DB.updateAuction(auction.id, nextCard, client);
+                await sendMessage(nextCard.owner_id,
+                    `Your card ${nextCard.card_details} is entering the auctions in **Slot ${nextCard.id}**!`
+                );
                 buildImage = true;
                 discordLogger.info('Updated auction')
             } else {

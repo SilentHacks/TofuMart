@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import getConfig from './config';
 import {Auctions, Inventory, Market, Queue} from "../db/tables";
-import {currencyEmotes, CurrencyId, currencyNames, title} from "./helpers";
+import {currencyEmotes, currencyNames, title} from "./helpers";
 
 const config = getConfig();
 
@@ -10,7 +10,7 @@ export const errorEmbed = (title = "", description = "") =>
     new Discord.MessageEmbed({...config.embeds.fail, title, description})
 
 const makeAuctionDesc = (auction: Auctions) => {
-    const currency = CurrencyId[auction.currency_id];
+    const currency = currencyNames[auction.currency_id];
     const emote = currencyEmotes[auction.currency_id];
     const unixTime = Math.floor(auction.end_time.getTime() / 1000);
     const endTime = new Date() > auction.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
@@ -19,7 +19,7 @@ const makeAuctionDesc = (auction: Auctions) => {
 }
 
 const makeMarketDesc = (market: Market) => {
-    const currency = CurrencyId[market.currency_id];
+    const currency = currencyNames[market.currency_id];
     const emote = currencyEmotes[market.currency_id];
     const unixTime = Math.floor(market.end_time.getTime() / 1000);
     const endTime = new Date() > market.end_time ? "**Ended**" : `<t:${unixTime}:R>`;
@@ -75,7 +75,7 @@ export const auctionEmbed = (auction: Auctions) => {
 export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) => {
     const description = `<@${userId}>, would you like to place a bid?\n
     Card: ${auction.card_details}
-    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${CurrencyId[auction.currency_id]}\`\n\n`;
+    Bid: ${currencyEmotes[auction.currency_id]} \`${bidAmount} ${currencyNames[auction.currency_id]}\`\n\n`;
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
@@ -90,7 +90,7 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
 export const buyEmbed = (card: Market, userId: string) => {
     const description = `<@${userId}>, would you like to buy this card?\n
     Card: ${card.card_details}
-    Price: ${currencyEmotes[card.currency_id]} \`${card.price} ${CurrencyId[card.currency_id]}\`\n\n`;
+    Price: ${currencyEmotes[card.currency_id]} \`${card.price} ${currencyNames[card.currency_id]}\`\n\n`;
 
     return new Discord.MessageEmbed({
         ...config.embeds.primary,
