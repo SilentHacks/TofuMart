@@ -34,7 +34,7 @@ export function cooldown(seconds: number) {
             const endTime = lastCalled + (seconds * 1000);
             const timeNow = new Date().getTime();
             if (lastCalled < timeNow && timeNow < endTime) return await interaction.reply({
-                content: `You are on cooldown. Please try again in \`${ceil((endTime - new Date().getTime()) / 1000)}s\`.`,
+                content: `You are on cooldown. Please try again in \`${ceil((endTime - new Date().getTime()) / 1000)}\`s.`,
                 ephemeral: true
             });
 
