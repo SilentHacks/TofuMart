@@ -83,7 +83,7 @@ export default class Trader {
 
     public async claim(): Promise<void> {
         const user = await DB.getUser(this.user.id);
-        if (!user || user.cards.length == 0) return await this.interaction.reply({content: 'You do not have any cards to claim.'});
+        if (!user || user.cards.length == 0) return await this.interaction.reply('You do not have any cards to claim.');
         const cardCode = user.cards.pop();
 
         const check = `<@${this.user.id}>, would you like to accept \`${cardCode}\` from <@${config.botId}>?`;
@@ -177,7 +177,7 @@ export default class Trader {
 
         // Check the user has enough
         const userInv = await DB.getInvItem(this.user.id, currency);
-        if (userInv.amount < amount) return await this.interaction.reply(`<@${this.user.id}>, you do not have \`${amount}\` **${currencyNames[currency]}**.`);
+        if (userInv.amount < amount) return await this.interaction.reply(`You do not have \`${amount}\` **${currencyNames[currency]}**.`);
 
         const tradeMessage = await this.startTrade();
         if (tradeMessage === undefined) return;

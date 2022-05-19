@@ -72,7 +72,7 @@ export default class BuyCommand extends SlashCommand {
         const price = shop.price[toString(currency)] * amount;
 
         const userInv = await DB.getInvItem(interaction.user.id, currency);
-        if (userInv.amount < price) return await interaction.reply(`<@${interaction.user.id}>, you do not have \`${price}\` **${currencyNames[currency]}**`);
+        if (userInv.amount < price) return await interaction.reply(`You do not have \`${price}\` **${currencyNames[currency]}**`);
 
         const embed = buyKeySlotEmbed(interaction.user.id, amount, interaction.options.getSubcommand(true), currency, price);
         const passDesc = "The purchase was successful.";

@@ -2,7 +2,6 @@ import {CommandInteraction, User} from "discord.js";
 import {client} from "../index";
 import {Auctions, Market, Shop} from "../db/tables";
 import {toString} from "lodash";
-import AuctionCommand from "../commands/auction";
 
 export enum CurrencyId {
     Opals = 0,
@@ -37,7 +36,7 @@ export const sendMessage = async (user: User | string, message: string) => {
 }
 
 export const commandDisabled = async (interaction: CommandInteraction) =>
-    await interaction.reply(`<@${interaction.user.id}>, this command has been temporary disabled.`);
+    await interaction.reply('This command has been temporary disabled.');
 
 export const delay = async (s: number) => new Promise(res => setTimeout(res, 1000 * s));
 
