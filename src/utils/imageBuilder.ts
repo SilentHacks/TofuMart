@@ -2,12 +2,20 @@ import path from "path";
 import fetch from "node-fetch";
 
 import sharp from "sharp";
+import DB from "../db";
 
 const cardWidth = 300;
 const cardHeight = 450;
 const rowCards = 5;
 
-export default async function buildAuctionList(imageUrls: Array<string>) {
+
+export default async function buildAuction() {
+    const auctions = await DB.getAuctions();
+    const imageUrls = auctions.map(a => a.image_url);
+    await buildAuctionList(imageUrls);
+}
+
+async function buildAuctionList(imageUrls: Array<string>) {
     const dir = path.resolve(__dirname, "../resources");
 
     const composites = [];

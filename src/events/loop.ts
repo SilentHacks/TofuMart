@@ -58,11 +58,7 @@ const auctionLoop = async () => {
 
     client.release();
 
-    if (buildImage) {
-        const auctions = await DB.getAuctions();
-        const imageUrls = auctions.map(a => a.image_url);
-        await buildAuction(imageUrls);
-    }
+    if (buildImage) await buildAuction();
 
     discordLogger.info('Finished auction loop');
 }
