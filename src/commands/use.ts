@@ -37,7 +37,7 @@ export default class UseCommand extends SlashCommand {
         card.market = market;
         if (!market) card.duration = config.auctionDuration;
 
-        await DB.queueCard(card);
+        await DB.queueCard(card, interaction.guildId!);
         await interaction.editReply({content: "Your card has been listed."});
     }
 

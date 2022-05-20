@@ -80,7 +80,7 @@ export default class BuyCommand extends SlashCommand {
         const cancelDesc = "Your purchase was canceled.";
 
         if (await new Confirmation(interaction, keySlotCheckFunc(interaction.user.id, currency, price), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
-            await DB.purchaseKeySlot(interaction.user.id, amount, currency, shop.id, price);
+            await DB.purchaseKeySlot(interaction.user.id, interaction.guildId, amount, currency, shop.id, price);
         }
 
     }

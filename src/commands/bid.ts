@@ -60,7 +60,7 @@ export default class BidCommand extends SlashCommand {
         const cancelDesc = "Your bid was not placed.";
 
         if (await new Confirmation(interaction, checkFunc(auction, interaction.user.id, amount), passDesc, failDesc, cancelDesc, {embed: embed}).confirm()) {
-            auction = await DB.placeBid(slot, interaction.user.id, amount);
+            auction = await DB.placeBid(slot, interaction.user.id, interaction.guildId, amount);
 
             if (interaction.user.id != auction.current_bidder) {
                 const newAuction = await DB.getAuction(slot);

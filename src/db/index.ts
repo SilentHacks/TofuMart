@@ -3,6 +3,7 @@ import moment from "moment";
 import getConfig from "../utils/config";
 import {floor} from "lodash";
 import {calcFee, CurrencyId} from "../utils/helpers";
+import {bidLog, buyLog, claimLog, LogTypes, useLog} from "../utils/commandLogger";
 
 const config = getConfig();
 const {Pool} = require('pg');
@@ -88,7 +89,7 @@ export default class DB {
         await conn.query('DELETE FROM queue WHERE id = $1', [nextCard.id]);
     }
 
-    public static async placeBid(slot: number, userId: string, amount: number): Promise<Auctions> {
+    public static async placeBid(slot: number, userId: string, guildId: string | null, amount: number): Promise<Auctions> {
         const client = await pool.connect();
         const auction = await this.fetchRow('SELECT * FROM auctions WHERE id = $1', [slot], client);
 
@@ -96,10 +97,9 @@ export default class DB {
             await client.query('BEGIN')
 
             // Give the current bid amount back to the bidder
-            const outbidInventory = await this.fetchVal(
+            await client.query(
                 'UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3 RETURNING amount',
-                [auction.current_bid, auction.currency_id, auction.current_bidder],
-                client);
+                [auction.current_bid, auction.currency_id, auction.current_bidder]);
 
             // Remove the amount from the new bidder's inventory
             const bidInv = await this.fetchVal(
@@ -116,6 +116,9 @@ export default class DB {
             let newEnd;
             if ((newEnd = moment(new Date()).add(2, 'm').toDate()) >= auction.end_time)
                 await client.query('UPDATE auctions SET end_time = $1 WHERE card_code = $2', [newEnd, auction.card_code]);
+
+            const desc = bidLog(slot, auction.card_code, amount, auction.currency_id, bidInv + amount, bidInv);
+            await this.insertLog(userId, guildId, LogTypes.Bid, desc, client);
 
             await client.query('COMMIT');
         } catch (e) {
@@ -147,11 +150,14 @@ export default class DB {
         return await this.fetchVal('SELECT COUNT(*) FROM queue WHERE market = $1', [market]);
     }
 
-    public static async queueCard(card: Queue) {
+    public static async queueCard(card: Queue, guildId: string) {
         await pool.query(
             'INSERT INTO queue(owner_id, card_code, card_details, image_url, duration, currency_id, start_price, market) ' +
             'VALUES($1, $2, $3, $4, $5, $6, $7, $8)',
             [card.owner_id, card.card_code, card.card_details, card.image_url, card.duration, card.currency_id, card.start_price, card.market]);
+
+        const desc = useLog(card.market, card.card_code, card.start_price, card.currency_id);
+        await this.insertLog(card.owner_id, guildId, LogTypes.Use, desc);
     }
 
     public static async getMarket(): Promise<Array<Market>> {
@@ -194,14 +200,18 @@ export default class DB {
         };
     }
 
-    public static async purchaseKeySlot(userId: string, amount: number, currencyId: number, itemId: number, price: number): Promise<void> {
+    public static async purchaseKeySlot(userId: string, guildId: string | null, amount: number, currencyId: number, itemId: number, price: number): Promise<void> {
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
-            await client.query('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3', [price, currencyId, userId]);
+            const amount: number = await this.fetchVal('UPDATE inventory SET amount = amount - $1 WHERE item_id = $2 AND user_id = $3 RETURNING amount',
+                [price, currencyId, userId], client);
             await client.query('UPDATE inventory SET amount = amount + $1 WHERE item_id = $2 AND user_id = $3', [amount, itemId, userId]);
+
+            const desc = buyLog(CurrencyId[itemId], amount, price, currencyId, amount + price, amount);
+            await this.insertLog(userId, guildId, LogTypes.Buy, desc, client);
 
             await this.addProfit(price, currencyId, client);
 
@@ -239,8 +249,11 @@ export default class DB {
         }
     }
 
-    public static async claimCard(userId: string, index: number): Promise<void> {
+    public static async claimCard(userId: string, guildId: string, cardCode: string, index: number): Promise<void> {
         await pool.query('UPDATE users SET cards = cards[1:$1] WHERE user_id = $2', [index, userId]);
+
+        const desc = claimLog(cardCode, index);
+        await this.insertLog(userId, guildId, LogTypes.Claim, desc);
     }
 
     public static async addToInv(userId: string, itemId: number, amount: number): Promise<void> {
@@ -284,6 +297,10 @@ export default class DB {
         }
 
         return true;
+    }
+
+    public static async insertLog(userId: string, guildId: string | null, logType: LogTypes, description: any, conn: any = pool): Promise<void> {
+        await conn.query('INSERT INTO logs(user_id, guild_id, type, description) VALUES($1, $2, $3, $4)', [userId, guildId, logType, description]);
     }
 
 }
