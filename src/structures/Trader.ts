@@ -223,7 +223,7 @@ export default class Trader {
         }
         let tradeMessage: Message;
 
-        await this.interaction.reply({content: `t!mt <@${this.user.id}>`});
+        this.interaction.reply({content: `t!mt <@${this.user.id}>`}).then();
 
         try {
             const collected = await this.interaction.channel!.awaitMessages({
