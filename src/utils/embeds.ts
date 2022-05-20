@@ -2,6 +2,7 @@ import Discord from 'discord.js';
 import getConfig from './config';
 import {Auctions, Inventory, Market, Queue} from "../db/tables";
 import {currencyEmotes, currencyNames, title} from "./helpers";
+import {commands} from "../index";
 
 const config = getConfig();
 
@@ -42,7 +43,7 @@ export const auctionListEmbed = (auctions: Array<Auctions>, imageUrl = "auction.
         image: {
             url: `attachment://${imageUrl}`,
         }
-    })
+    });
 }
 
 export const auctionEmbed = (auction: Auctions) => {
@@ -69,7 +70,7 @@ export const auctionEmbed = (auction: Auctions) => {
         image: {
             url: auction.image_url,
         }
-    })
+    });
 }
 
 export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) => {
@@ -84,7 +85,7 @@ export const bidEmbed = (auction: Auctions, userId: string, bidAmount: number) =
         thumbnail: {
             url: auction.image_url
         }
-    })
+    });
 }
 
 export const buyEmbed = (card: Market, userId: string) => {
@@ -99,7 +100,7 @@ export const buyEmbed = (card: Market, userId: string) => {
         thumbnail: {
             url: card.image_url
         }
-    })
+    });
 }
 
 export const buyKeySlotEmbed = (userId: string, amount: number, type: string, currency: number, price: number) => {
@@ -110,7 +111,7 @@ export const buyKeySlotEmbed = (userId: string, amount: number, type: string, cu
         ...config.embeds.primary,
         title: `Purchase ${title(type)}`,
         description: description
-    })
+    });
 }
 
 export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
@@ -125,7 +126,7 @@ export const invEmbed = (userId: string, userInv: Array<Inventory>) => {
         ...config.embeds.primary,
         title: "Inventory",
         description: description
-    })
+    });
 }
 
 export const queueEmbed = (userId: string, market: boolean) => {
@@ -141,7 +142,7 @@ export const queueEmbed = (userId: string, market: boolean) => {
             ...config.embeds.primary,
             title: "Auction Queue",
             description: description
-        })
+        });
     }
 }
 
@@ -169,7 +170,7 @@ export const marketCardEmbed = (market: Market) => {
         image: {
             url: market.image_url,
         }
-    })
+    });
 }
 
 export const marketEmbed = (userId: string) => {
@@ -187,6 +188,19 @@ export const marketEmbed = (userId: string) => {
             ...config.embeds.primary,
             title: `Marketplace${ended ? " - Ended" : ""}`,
             description: description
-        })
+        });
     }
+}
+
+export const helpEmbed = () => {
+    let helpDesc = "";
+    commands.forEach((value, key) => {
+        helpDesc += `> **${title(key)}**: ${value.description}\n`
+    });
+
+    return new Discord.MessageEmbed({
+        ...config.embeds.primary,
+        title: 'Help',
+        description: helpDesc
+    });
 }
