@@ -39,7 +39,7 @@ To run the bot, run `npm run start`.
 ### General
 * `/help` - Shows you the available commands
 * `/claim` - Claims the most recently purchased/won card
-`/exchange` - Initiates an exchange with the bot to trade currencies
+* `/exchange` - Initiates an exchange with the bot to trade currencies
 * `/queue` - View the queue for the auctions/market
 * `/use` - Use a Key/Slot to add your card to a queue
 
